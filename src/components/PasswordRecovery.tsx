@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Lock, ArrowLeft, Check, X, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Check, X, Loader2, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sendPasswordResetEmail } from '../lib/email';
 
@@ -9,8 +9,9 @@ interface PasswordRecoveryProps {
 }
 
 export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) {
-  const [step, setStep] = useState<'email' | 'code' | 'newPassword'>('email');
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState<'username' | 'code' | 'newPassword'>('username');
+  const [username, setUsername] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,11 +25,10 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
   };
 
   // Guardar código en Supabase
-  const saveRecoveryCode = async (userEmail: string, recoveryCode: string) => {
+  const saveRecoveryCode = async (user: string, recoveryCode: string) => {
     try {
-      // Primero verificamos si existe una tabla de recovery o usamos clients
       const { error } = await supabase.from('settings').upsert({
-        key: `recovery_${userEmail}`,
+        key: `recovery_${user}`,
         value: JSON.stringify({
           code: recoveryCode,
           expires: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutos
@@ -44,19 +44,18 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
   };
 
   // Verificar código
-  const verifyCode = async (userEmail: string, enteredCode: string): Promise<boolean> => {
+  const verifyCode = async (user: string, enteredCode: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
         .from('settings')
         .select('value')
-        .eq('key', `recovery_${userEmail}`)
+        .eq('key', `recovery_${user}`)
         .single();
 
       if (error || !data) return false;
 
       const recoveryData = JSON.parse(data.value);
 
-      // Verificar si el código es correcto y no ha expirado
       if (recoveryData.code !== enteredCode) return false;
       if (new Date() > new Date(recoveryData.expires)) return false;
       if (recoveryData.used) return false;
@@ -69,18 +68,18 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
   };
 
   // Marcar código como usado
-  const markCodeAsUsed = async (userEmail: string) => {
+  const markCodeAsUsed = async (user: string) => {
     try {
       const { data } = await supabase
         .from('settings')
         .select('value')
-        .eq('key', `recovery_${userEmail}`)
+        .eq('key', `recovery_${user}`)
         .single();
 
       if (data) {
         const recoveryData = JSON.parse(data.value);
         recoveryData.used = true;
-        await supabase.from('settings').update({ value: JSON.stringify(recoveryData) }).eq('key', `recovery_${userEmail}`);
+        await supabase.from('settings').update({ value: JSON.stringify(recoveryData) }).eq('key', `recovery_${user}`);
       }
     } catch (err) {
       console.error('Error marcando código:', err);
@@ -88,12 +87,12 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
   };
 
   // Actualizar contraseña
-  const updatePassword = async (userEmail: string, newPass: string): Promise<boolean> => {
+  const updatePassword = async (user: string, newPass: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({ password: newPass, updated_at: new Date().toISOString() })
-        .eq('email', userEmail);
+        .eq('name', user);
 
       return !error;
     } catch (err) {
@@ -102,50 +101,64 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
     }
   };
 
-  // Paso 1: Enviar código
-  const handleSendCode = async (e: React.FormEvent) => {
+  // Buscar usuario por username y obtener email
+  const findUserByUsername = async (user: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('name, email')
+        .eq('name', user)
+        .single();
+
+      if (error || !data) return null;
+      return data;
+    } catch (err) {
+      console.error('Error buscando usuario:', err);
+      return null;
+    }
+  };
+
+  // Paso 1: Buscar usuario
+  const handleFindUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    try {
-      // Verificar si el email existe
-      const { data: userData, error: userError } = await supabase
-        .from('clients')
-        .select('email')
-        .eq('email', email)
-        .single();
+    const userData = await findUserByUsername(username);
 
-      if (userError || !userData) {
-        setError('No existe una cuenta con este email');
-        setLoading(false);
-        return;
-      }
-
-      // Generar y guardar código
-      const recoveryCode = generateCode();
-      const saved = await saveRecoveryCode(email, recoveryCode);
-
-      if (!saved) {
-        setError('Error al procesar la solicitud');
-        setLoading(false);
-        return;
-      }
-
-      // Enviar email
-      const emailResult = await sendPasswordResetEmail(email, recoveryCode);
-
-      if (!emailResult.success) {
-        setError('Error al enviar el email. Verifica que el email sea correcto.');
-        setLoading(false);
-        return;
-      }
-
-      setSuccess('Código enviado. Revisa tu bandeja de entrada.');
-      setStep('code');
-    } catch (err) {
-      setError('Error al procesar la solicitud');
+    if (!userData) {
+      setError('No existe un usuario con ese nombre');
+      setLoading(false);
+      return;
     }
+
+    setUserEmail(userData.email || 'admin@localhost');
+
+    // Generar y guardar código
+    const recoveryCode = generateCode();
+    const saved = await saveRecoveryCode(username, recoveryCode);
+
+    if (!saved) {
+      setError('Error al procesar la solicitud');
+      setLoading(false);
+      return;
+    }
+
+    // Enviar email si tiene email registrado, si no mostrar código en consola
+    if (userData.email) {
+      const emailResult = await sendPasswordResetEmail(userData.email, recoveryCode);
+      if (emailResult.success) {
+        setSuccess('Código enviado a tu email. Revisa tu bandeja de entrada.');
+      } else {
+        console.log('Código de recuperación:', recoveryCode);
+        setSuccess('Código generado. (Revisa la consola del navegador si no recibiste el email)');
+      }
+    } else {
+      console.log('Código de recuperación:', recoveryCode);
+      setSuccess('Código generado. (El usuario no tiene email - revisa la consola del navegador)');
+    }
+
+    setStep('code');
     setLoading(false);
   };
 
@@ -155,7 +168,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
     setError('');
     setLoading(true);
 
-    const isValid = await verifyCode(email, code);
+    const isValid = await verifyCode(username, code);
 
     if (!isValid) {
       setError('Código inválido o expirado');
@@ -174,8 +187,8 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
     setError('');
     setLoading(true);
 
-    if (newPassword.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+    if (newPassword.length < 4) {
+      setError('La contraseña debe tener al menos 4 caracteres');
       setLoading(false);
       return;
     }
@@ -186,7 +199,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
       return;
     }
 
-    const updated = await updatePassword(email, newPassword);
+    const updated = await updatePassword(username, newPassword);
 
     if (!updated) {
       setError('Error al actualizar la contraseña');
@@ -194,7 +207,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
       return;
     }
 
-    await markCodeAsUsed(email);
+    await markCodeAsUsed(username);
     setSuccess('¡Contraseña actualizada exitosamente!');
 
     setTimeout(() => {
@@ -224,7 +237,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
             </button>
             <h2 className="text-xl font-bold text-white">Recuperar Contraseña</h2>
             <p className="text-orange-200 text-sm mt-1">
-              {step === 'email' && 'Ingresa tu email'}
+              {step === 'username' && 'Ingresa tu usuario'}
               {step === 'code' && 'Ingresa el código'}
               {step === 'newPassword' && 'Nueva contraseña'}
             </p>
@@ -246,24 +259,27 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
               </div>
             )}
 
-            {/* Paso 1: Email */}
-            {step === 'email' && (
-              <form onSubmit={handleSendCode} className="space-y-4">
+            {/* Paso 1: Username */}
+            {step === 'username' && (
+              <form onSubmit={handleFindUser} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Correo electrónico
+                    Nombre de usuario
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      placeholder="tucorreo@ejemplo.com"
+                      placeholder="Tu nombre de usuario"
                       required
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Ingresa el usuario con el que inicias sesión
+                  </p>
                 </div>
                 <button
                   type="submit"
@@ -273,10 +289,10 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
                   {loading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Enviando...
+                      Buscando...
                     </>
                   ) : (
-                    'Enviar Código'
+                    'Buscar Usuario'
                   )}
                 </button>
               </form>
@@ -299,7 +315,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
                     required
                   />
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    Revisa tu bandeja de entrada o spam
+                    Revisa tu bandeja de entrada o spam{userEmail !== 'admin@localhost' ? '' : ' (o la consola del navegador)'}
                   </p>
                 </div>
                 <button
@@ -333,8 +349,8 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      placeholder="Mínimo 6 caracteres"
-                      minLength={6}
+                      placeholder="Mínimo 4 caracteres"
+                      minLength={4}
                       required
                     />
                   </div>
@@ -351,7 +367,7 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       placeholder="Repite la contraseña"
-                      minLength={6}
+                      minLength={4}
                       required
                     />
                   </div>
