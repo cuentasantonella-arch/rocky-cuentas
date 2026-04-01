@@ -1,0 +1,374 @@
+import { useState } from 'react';
+import { Mail, Lock, ArrowLeft, Check, X, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { sendPasswordResetEmail } from '../lib/email';
+
+interface PasswordRecoveryProps {
+  onBack: () => void;
+  onComplete: () => void;
+}
+
+export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) {
+  const [step, setStep] = useState<'email' | 'code' | 'newPassword'>('email');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Generar código de 6 dígitos
+  const generateCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  // Guardar código en Supabase
+  const saveRecoveryCode = async (userEmail: string, recoveryCode: string) => {
+    try {
+      // Primero verificamos si existe una tabla de recovery o usamos clients
+      const { error } = await supabase.from('settings').upsert({
+        key: `recovery_${userEmail}`,
+        value: JSON.stringify({
+          code: recoveryCode,
+          expires: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 minutos
+          used: false,
+        }),
+        updated_at: new Date().toISOString(),
+      });
+      return !error;
+    } catch (err) {
+      console.error('Error guardando código:', err);
+      return false;
+    }
+  };
+
+  // Verificar código
+  const verifyCode = async (userEmail: string, enteredCode: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', `recovery_${userEmail}`)
+        .single();
+
+      if (error || !data) return false;
+
+      const recoveryData = JSON.parse(data.value);
+
+      // Verificar si el código es correcto y no ha expirado
+      if (recoveryData.code !== enteredCode) return false;
+      if (new Date() > new Date(recoveryData.expires)) return false;
+      if (recoveryData.used) return false;
+
+      return true;
+    } catch (err) {
+      console.error('Error verificando código:', err);
+      return false;
+    }
+  };
+
+  // Marcar código como usado
+  const markCodeAsUsed = async (userEmail: string) => {
+    try {
+      const { data } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', `recovery_${userEmail}`)
+        .single();
+
+      if (data) {
+        const recoveryData = JSON.parse(data.value);
+        recoveryData.used = true;
+        await supabase.from('settings').update({ value: JSON.stringify(recoveryData) }).eq('key', `recovery_${userEmail}`);
+      }
+    } catch (err) {
+      console.error('Error marcando código:', err);
+    }
+  };
+
+  // Actualizar contraseña
+  const updatePassword = async (userEmail: string, newPass: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update({ password: newPass, updated_at: new Date().toISOString() })
+        .eq('email', userEmail);
+
+      return !error;
+    } catch (err) {
+      console.error('Error actualizando contraseña:', err);
+      return false;
+    }
+  };
+
+  // Paso 1: Enviar código
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Verificar si el email existe
+      const { data: userData, error: userError } = await supabase
+        .from('clients')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (userError || !userData) {
+        setError('No existe una cuenta con este email');
+        setLoading(false);
+        return;
+      }
+
+      // Generar y guardar código
+      const recoveryCode = generateCode();
+      const saved = await saveRecoveryCode(email, recoveryCode);
+
+      if (!saved) {
+        setError('Error al procesar la solicitud');
+        setLoading(false);
+        return;
+      }
+
+      // Enviar email
+      const emailResult = await sendPasswordResetEmail(email, recoveryCode);
+
+      if (!emailResult.success) {
+        setError('Error al enviar el email. Verifica que el email sea correcto.');
+        setLoading(false);
+        return;
+      }
+
+      setSuccess('Código enviado. Revisa tu bandeja de entrada.');
+      setStep('code');
+    } catch (err) {
+      setError('Error al procesar la solicitud');
+    }
+    setLoading(false);
+  };
+
+  // Paso 2: Verificar código
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const isValid = await verifyCode(email, code);
+
+    if (!isValid) {
+      setError('Código inválido o expirado');
+      setLoading(false);
+      return;
+    }
+
+    setSuccess('Código verificado correctamente');
+    setStep('newPassword');
+    setLoading(false);
+  };
+
+  // Paso 3: Nueva contraseña
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    if (newPassword.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setLoading(false);
+      return;
+    }
+
+    const updated = await updatePassword(email, newPassword);
+
+    if (!updated) {
+      setError('Error al actualizar la contraseña');
+      setLoading(false);
+      return;
+    }
+
+    await markCodeAsUsed(email);
+    setSuccess('¡Contraseña actualizada exitosamente!');
+
+    setTimeout(() => {
+      onComplete();
+    }, 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/20 via-purple-900/10 to-pink-900/20" />
+
+      <div className="relative w-full max-w-md">
+        <div className="bg-[#16213e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-600 to-red-600 p-6 text-center relative">
+            <button
+              onClick={onBack}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white">Recuperar Contraseña</h2>
+            <p className="text-orange-200 text-sm mt-1">
+              {step === 'email' && 'Ingresa tu email'}
+              {step === 'code' && 'Ingresa el código'}
+              {step === 'newPassword' && 'Nueva contraseña'}
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="p-6 space-y-4">
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                <X className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
+                <Check className="w-4 h-4 flex-shrink-0" />
+                {success}
+              </div>
+            )}
+
+            {/* Paso 1: Email */}
+            {step === 'email' && (
+              <form onSubmit={handleSendCode} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Correo electrónico
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="tucorreo@ejemplo.com"
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    'Enviar Código'
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Paso 2: Código */}
+            {step === 'code' && (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Código de verificación
+                  </label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full px-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="000000"
+                    maxLength={6}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Revisa tu bandeja de entrada o spam
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || code.length !== 6}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    'Verificar Código'
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Paso 3: Nueva contraseña */}
+            {step === 'newPassword' && (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Nueva contraseña
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirmar contraseña
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="Repite la contraseña"
+                      minLength={6}
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar Nueva Contraseña'
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
