@@ -131,6 +131,7 @@ export function SettingsPanel() {
     password: '',
   });
   const [userError, setUserError] = useState('');
+  const [userSuccess, setUserSuccess] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,11 +179,13 @@ export function SettingsPanel() {
     setShowUserModal(false);
     setEditingUser(null);
     setUserError('');
+    setUserSuccess('');
   };
 
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUserError('');
+    setUserSuccess('');
 
     if (!editingUser && !userFormData.password) {
       setUserError('La contraseña es requerida para nuevos usuarios');
@@ -205,7 +208,8 @@ export function SettingsPanel() {
           updatedUser.password = userFormData.password;
         }
         await updateUser(updatedUser);
-        handleCloseUserModal();
+        setUserSuccess('Usuario actualizado correctamente');
+        setTimeout(() => handleCloseUserModal(), 1500);
       } else {
         const result = await addUser({
           name: userFormData.name.trim(),
@@ -213,7 +217,8 @@ export function SettingsPanel() {
           password: userFormData.password,
         });
         if (result.success) {
-          handleCloseUserModal();
+          setUserSuccess(`¡Usuario "${userFormData.name}" creado exitosamente!`);
+          setTimeout(() => handleCloseUserModal(), 2000);
         } else {
           setUserError(result.error || 'Error al crear usuario');
         }
@@ -646,6 +651,11 @@ export function SettingsPanel() {
               {userError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
                   {userError}
+                </div>
+              )}
+              {userSuccess && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
+                  {userSuccess}
                 </div>
               )}
 

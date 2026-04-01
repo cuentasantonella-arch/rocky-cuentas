@@ -140,17 +140,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Normalizar nombre de usuario
       const normalizedUsername = username.trim().toLowerCase();
 
+      console.log('Intentando login con:', normalizedUsername);
+      console.log('Usuarios disponibles:', users);
+
       // Buscar en usuarios locales
       const user = users.find(u => u.name.toLowerCase() === normalizedUsername);
 
       if (!user) {
+        console.log('Usuario no encontrado');
         return { success: false, error: 'Usuario no encontrado' };
       }
 
+      console.log('Usuario encontrado:', user);
+
       if (user.password !== password) {
+        console.log('Contraseña incorrecta');
         return { success: false, error: 'Contraseña incorrecta' };
       }
 
+      console.log('Login exitoso');
       setCurrentUser(user);
 
       // Intentar sincronizar en segundo plano
@@ -211,8 +219,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addUser = async (userData: Omit<User, 'id'> & { password: string }): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Normalizar nombre
+      const normalizedName = userData.name.trim().toLowerCase();
+
       // Verificar si ya existe
-      const exists = users.find(u => u.name.toLowerCase() === userData.name.toLowerCase());
+      const exists = users.find(u => u.name.toLowerCase() === normalizedName);
       if (exists) {
         return { success: false, error: 'El nombre de usuario ya existe' };
       }
@@ -227,10 +238,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       };
 
+      console.log('Creando usuario:', newUser);
+
       // Guardar en localStorage (siempre funciona)
       const updatedUsers = [...users, newUser];
+      console.log('Usuarios actualizados:', updatedUsers);
+
       setUsers(updatedUsers);
       saveUsersToStorage(updatedUsers);
+
+      // Verificar que se guardó
+      const stored = localStorage.getItem(STORAGE_KEY);
+      console.log('localStorage después de guardar:', stored);
 
       // Intentar sincronizar con Supabase en segundo plano
       syncUserToSupabase(newUser);
