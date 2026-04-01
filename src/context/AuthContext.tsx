@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  // Login - verifica contra usuarios locales Y Supabase
+  // Login - verifica contra usuarios locales
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // Normalizar nombre de usuario
@@ -142,42 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Intentando login con:', normalizedUsername);
       console.log('Usuarios disponibles:', users);
 
-      // 1. Primero buscar en usuarios locales
-      let user = users.find(u => u.name.toLowerCase() === normalizedUsername);
-
-      // 2. Si no está en local, buscar en Supabase directamente
-      if (!user) {
-        console.log('Usuario no encontrado en local, buscando en Supabase...');
-        try {
-          const { data, error } = await supabase
-            .from('clients')
-            .select('id, name, email, role, password')
-            .eq('name', normalizedUsername)
-            .single();
-
-          if (data && !error) {
-            user = {
-              id: data.id,
-              name: data.name,
-              email: data.email || '',
-              role: (data.role as UserRole) || 'collaborator',
-              password: data.password,
-              createdAt: data.created_at,
-            };
-            console.log('Usuario encontrado en Supabase:', user);
-
-            // Guardar en localStorage para futuras veces
-            const updatedUsers = [...users, user];
-            setUsers(updatedUsers);
-            saveUsersToStorage(updatedUsers);
-          }
-        } catch (e) {
-          console.log('Error buscando en Supabase:', e);
-        }
-      }
+      // Buscar en usuarios locales (incluye admin por defecto)
+      const user = users.find(u => u.name.toLowerCase() === normalizedUsername);
 
       if (!user) {
-        console.log('Usuario no encontrado en ningún lugar');
+        console.log('Usuario no encontrado');
         return { success: false, error: 'Usuario no encontrado' };
       }
 
@@ -191,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Login exitoso');
       setCurrentUser(user);
 
-      // Sincronizar en segundo plano
+      // Sincronizar en segundo plano con Supabase
       syncUserToSupabase(user);
 
       return { success: true };
