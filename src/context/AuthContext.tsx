@@ -61,80 +61,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([DEFAULT_ADMIN]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<'pending' | 'syncing' | 'done' | 'error'>('pending');
 
-  // Cargar usuarios desde localStorage al iniciar
-  useEffect(() => {
-    const storedUsers = loadUsersFromStorage();
-    setUsers(storedUsers);
+  // Función para sincronizar con Supabase
+  const syncFromSupabase = async () => {
+    setSyncStatus('syncing');
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, email, role, password')
+        .order('name');
 
-    // Verificar si hay sesión guardada
-    const savedUser = localStorage.getItem(CURRENT_USER_KEY);
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setCurrentUser(user);
-      } catch (e) {
-        console.error('Error parsing saved user:', e);
+      if (error) {
+        console.log('Supabase error:', error.message);
+        setSyncStatus('error');
+        return;
       }
-    }
-    setLoading(false);
-  }, []);
 
-  // Guardar usuario actual en localStorage
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem(CURRENT_USER_KEY);
-    }
-  }, [currentUser]);
+      if (data && data.length > 0) {
+        const supabaseUsers: User[] = data.map((c: any) => ({
+          id: c.id,
+          name: c.name || c.username || '',
+          email: c.email || '',
+          role: (c.role as UserRole) || 'collaborator',
+          password: c.password || '',
+          createdAt: c.created_at,
+        }));
 
-  // Sincronizar con Supabase en segundo plano (no bloquea la app)
-  useEffect(() => {
-    const syncToSupabase = async () => {
-      try {
-        // Intentar cargar usuarios de Supabase
-        const { data, error } = await supabase
-          .from('clients')
-          .select('id, name, email, role, password')
-          .order('name');
+        // Fusionar: locales + nuevos de Supabase
+        const localIds = users.map(u => u.id);
+        const newFromSupabase = supabaseUsers.filter(u => !localIds.includes(u.id));
 
-        if (error) {
-          console.log('Supabase no disponible, usando almacenamiento local');
-          return;
+        if (newFromSupabase.length > 0) {
+          const mergedUsers = [...users, ...newFromSupabase];
+          setUsers(mergedUsers);
+          saveUsersToStorage(mergedUsers);
+          console.log('Sincronizados', newFromSupabase.length, 'usuarios de Supabase');
         }
-
-        if (data && data.length > 0) {
-          // Fusionar usuarios de Supabase con locales
-          const supabaseUsers: User[] = data.map((c: any) => ({
-            id: c.id,
-            name: c.name || c.username || '',
-            email: c.email || '',
-            role: (c.role as UserRole) || 'collaborator',
-            password: c.password || '',
-            createdAt: c.created_at,
-          }));
-
-          // Combinar con locales (prioridad para locales)
-          const localIds = users.map(u => u.id);
-          const newFromSupabase = supabaseUsers.filter(u => !localIds.includes(u.id));
-
-          if (newFromSupabase.length > 0) {
-            const mergedUsers = [...users, ...newFromSupabase];
-            setUsers(mergedUsers);
-            saveUsersToStorage(mergedUsers);
-          }
-        }
-      } catch (e) {
-        console.log('Sincronización con Supabase no disponible');
       }
+      setSyncStatus('done');
+    } catch (e) {
+      console.log('Error de sincronización:', e);
+      setSyncStatus('error');
+    }
+  };
+
+  // Cargar usuarios desde localStorage Y sincronizar con Supabase al iniciar
+  useEffect(() => {
+    const init = async () => {
+      // 1. Cargar de localStorage inmediatamente
+      const storedUsers = loadUsersFromStorage();
+      setUsers(storedUsers);
+
+      // 2. Verificar si hay sesión guardada
+      const savedUser = localStorage.getItem(CURRENT_USER_KEY);
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          setCurrentUser(user);
+        } catch (e) {
+          console.error('Error parsing saved user:', e);
+        }
+      }
+
+      // 3. Sincronizar con Supabase
+      await syncFromSupabase();
+
+      setLoading(false);
     };
 
-    // Solo sincronizar si hay usuarios en Supabase potenciales
-    syncToSupabase();
+    init();
   }, []);
 
-  // Login - verifica contra usuarios locales (siempre funciona)
+  // Login - verifica contra usuarios locales Y Supabase
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // Normalizar nombre de usuario
@@ -143,11 +142,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Intentando login con:', normalizedUsername);
       console.log('Usuarios disponibles:', users);
 
-      // Buscar en usuarios locales
-      const user = users.find(u => u.name.toLowerCase() === normalizedUsername);
+      // 1. Primero buscar en usuarios locales
+      let user = users.find(u => u.name.toLowerCase() === normalizedUsername);
+
+      // 2. Si no está en local, buscar en Supabase directamente
+      if (!user) {
+        console.log('Usuario no encontrado en local, buscando en Supabase...');
+        try {
+          const { data, error } = await supabase
+            .from('clients')
+            .select('id, name, email, role, password')
+            .eq('name', normalizedUsername)
+            .single();
+
+          if (data && !error) {
+            user = {
+              id: data.id,
+              name: data.name,
+              email: data.email || '',
+              role: (data.role as UserRole) || 'collaborator',
+              password: data.password,
+              createdAt: data.created_at,
+            };
+            console.log('Usuario encontrado en Supabase:', user);
+
+            // Guardar en localStorage para futuras veces
+            const updatedUsers = [...users, user];
+            setUsers(updatedUsers);
+            saveUsersToStorage(updatedUsers);
+          }
+        } catch (e) {
+          console.log('Error buscando en Supabase:', e);
+        }
+      }
 
       if (!user) {
-        console.log('Usuario no encontrado');
+        console.log('Usuario no encontrado en ningún lugar');
         return { success: false, error: 'Usuario no encontrado' };
       }
 
@@ -161,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Login exitoso');
       setCurrentUser(user);
 
-      // Intentar sincronizar en segundo plano
+      // Sincronizar en segundo plano
       syncUserToSupabase(user);
 
       return { success: true };
