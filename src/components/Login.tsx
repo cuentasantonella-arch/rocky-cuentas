@@ -71,9 +71,9 @@ export function Login() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Usuario"
                   required
-                  autoComplete="username"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -90,9 +90,9 @@ export function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 pr-12 py-3 bg-[#0f0f1a] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  placeholder="Ingresa tu contraseña"
+                  placeholder="Contraseña"
                   required
-                  autoComplete="current-password"
+                  autoComplete="off"
                 />
                 <button
                   type="button"
@@ -135,10 +135,15 @@ export function Login() {
               )}
             </button>
 
-            {/* Credentials hint */}
-            <div className="text-center text-xs text-gray-500 mt-4">
-              <p>Credenciales por defecto:</p>
-              <p className="text-gray-400 mt-1">Usuario: <code className="bg-gray-800 px-2 py-0.5 rounded">admin</code> • Contraseña: <code className="bg-gray-800 px-2 py-0.5 rounded">admin123</code></p>
+            {/* Forgot Password Link */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => alert('Para recuperar tu contraseña, contacta al administrador del sistema.')}
+                className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </div>
           </form>
         </div>
