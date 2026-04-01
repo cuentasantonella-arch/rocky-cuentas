@@ -1,132 +1,265 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, DEFAULT_ADMIN_USER, generateId } from '../types';
-
-const STORAGE_KEY = 'streamguard_users';
-const CURRENT_USER_KEY = 'streamguard_current_user';
+import { supabase } from '../lib/supabase';
+import { User, UserRole } from '../types';
 
 interface AuthContextType {
   currentUser: User | null;
   users: User[];
   isAuthenticated: boolean;
-  login: (username: string, password: string) => { success: boolean; error?: string };
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'createdAt' | 'passwordHash'> & { password: string }) => void;
-  updateUser: (user: User) => void;
-  deleteUser: (id: string) => void;
+  addUser: (user: Omit<User, 'id'> & { password: string }) => Promise<{ success: boolean; error?: string }>;
+  updateUser: (user: User) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
   isAdmin: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Inicializar usuarios por defecto
-const initializeUsers = (): User[] => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [DEFAULT_ADMIN_USER];
-    }
-  }
-  return [DEFAULT_ADMIN_USER];
+const DEFAULT_ADMIN: User = {
+  id: 'admin',
+  name: 'admin',
+  email: 'admin@localhost',
+  role: 'admin',
+  password: 'admin123',
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(() => initializeUsers());
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem(CURRENT_USER_KEY);
-    if (stored) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Cargar usuarios desde Supabase al iniciar
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  // Verificar si hay sesión guardada
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rocky_current_user');
+    if (savedUser) {
       try {
-        return JSON.parse(stored);
-      } catch {
-        return null;
+        const user = JSON.parse(savedUser);
+        setCurrentUser(user);
+      } catch (e) {
+        console.error('Error parsing saved user:', e);
       }
     }
-    return null;
-  });
-
-  // Guardar usuarios en localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
+    setLoading(false);
+  }, []);
 
   // Guardar usuario actual en localStorage
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
+      localStorage.setItem('rocky_current_user', JSON.stringify(currentUser));
     } else {
-      localStorage.removeItem(CURRENT_USER_KEY);
+      localStorage.removeItem('rocky_current_user');
     }
   }, [currentUser]);
 
-  const login = (username: string, password: string): { success: boolean; error?: string } => {
-    const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+  // Cargar usuarios desde Supabase
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, email, role, password')
+        .order('name');
 
-    if (!user) {
-      return { success: false, error: 'Usuario no encontrado' };
+      if (error) {
+        console.error('Error loading users:', error);
+        // Si falla, usar admin por defecto
+        setUsers([DEFAULT_ADMIN]);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const mappedUsers: User[] = data.map((c: any) => ({
+          id: c.id,
+          name: c.name || c.username || '',
+          email: c.email || '',
+          role: c.role || 'user',
+          password: c.password || '',
+        }));
+        setUsers(mappedUsers);
+      } else {
+        // Crear usuario admin por defecto si no existe
+        await createDefaultAdmin();
+      }
+    } catch (e) {
+      console.error('Error loading users:', e);
+      setUsers([DEFAULT_ADMIN]);
     }
+  };
 
-    if (user.passwordHash !== password) {
-      return { success: false, error: 'Contraseña incorrecta' };
+  // Crear admin por defecto en Supabase
+  const createDefaultAdmin = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{
+          name: 'admin',
+          email: 'admin@localhost',
+          role: 'admin',
+          password: 'admin123',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setUsers([{
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          password: data.password,
+        }]);
+      } else {
+        setUsers([DEFAULT_ADMIN]);
+      }
+    } catch (e) {
+      console.error('Error creating default admin:', e);
+      setUsers([DEFAULT_ADMIN]);
     }
+  };
 
-    // Actualizar último login
-    const updatedUser = { ...user, lastLogin: new Date().toISOString() };
-    setUsers((prev) => prev.map((u) => (u.id === user.id ? updatedUser : u)));
-    setCurrentUser(updatedUser);
+  // Login - verifica contra Supabase
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Primero buscar en Supabase
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, email, role, password')
+        .eq('name', username)
+        .single();
 
-    return { success: true };
+      if (error || !data) {
+        // Si no existe, verificar con el default admin
+        if (username.toLowerCase() === 'admin' && password === 'admin123') {
+          setCurrentUser(DEFAULT_ADMIN);
+          return { success: true };
+        }
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      if (data.password !== password) {
+        return { success: false, error: 'Contraseña incorrecta' };
+      }
+
+      const user: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role || 'user',
+        password: data.password,
+      };
+
+      setCurrentUser(user);
+      return { success: true };
+    } catch (e) {
+      console.error('Login error:', e);
+      // Fallback al admin local
+      if (username.toLowerCase() === 'admin' && password === 'admin123') {
+        setCurrentUser(DEFAULT_ADMIN);
+        return { success: true };
+      }
+      return { success: false, error: 'Error al iniciar sesión' };
+    }
   };
 
   const logout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('rocky_current_user');
   };
 
-  const addUser = (userData: Omit<User, 'id' | 'createdAt' | 'passwordHash'> & { password: string }) => {
-    // Verificar si el username ya existe
-    if (users.some((u) => u.username.toLowerCase() === userData.username.toLowerCase())) {
-      throw new Error('El nombre de usuario ya existe');
+  const addUser = async (userData: Omit<User, 'id'> & { password: string }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Verificar si ya existe
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('name', userData.name)
+        .single();
+
+      if (existing) {
+        return { success: false, error: 'El nombre de usuario ya existe' };
+      }
+
+      // Crear en Supabase
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{
+          name: userData.name,
+          email: userData.email,
+          role: userData.role || 'user',
+          password: userData.password,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        return { success: false, error: 'Error al crear usuario' };
+      }
+
+      // Recargar usuarios
+      await loadUsers();
+
+      return { success: true };
+    } catch (e) {
+      console.error('Error adding user:', e);
+      return { success: false, error: 'Error al crear usuario' };
     }
-
-    const newUser: User = {
-      ...userData,
-      id: generateId(),
-      passwordHash: userData.password,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Eliminar la propiedad password antes de guardar (solo guardamos passwordHash)
-    const userToSave: User = {
-      id: newUser.id,
-      username: newUser.username,
-      passwordHash: newUser.passwordHash,
-      role: newUser.role,
-      name: newUser.name,
-      createdAt: newUser.createdAt,
-    };
-    setUsers((prev) => [...prev, userToSave]);
   };
 
-  const updateUser = (user: User) => {
-    setUsers((prev) => prev.map((u) => (u.id === user.id ? user : u)));
+  const updateUser = async (user: User) => {
+    try {
+      await supabase
+        .from('clients')
+        .update({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          password: user.password,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
 
-    // Actualizar usuario actual si es el mismo
-    if (currentUser?.id === user.id) {
-      setCurrentUser(user);
+      // Actualizar usuario actual si es el mismo
+      if (currentUser?.id === user.id) {
+        setCurrentUser(user);
+      }
+
+      // Recargar usuarios
+      await loadUsers();
+    } catch (e) {
+      console.error('Error updating user:', e);
     }
   };
 
-  const deleteUser = (id: string) => {
-    // No permitir eliminar al admin
-    if (id === 'admin') {
-      throw new Error('No se puede eliminar el usuario administrador');
-    }
+  const deleteUser = async (id: string) => {
+    try {
+      if (id === 'admin') {
+        throw new Error('No se puede eliminar el usuario administrador');
+      }
 
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+      await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
 
-    // Si el usuario actual es el eliminado, hacer logout
-    if (currentUser?.id === id) {
-      setCurrentUser(null);
+      if (currentUser?.id === id) {
+        setCurrentUser(null);
+      }
+
+      // Recargar usuarios
+      await loadUsers();
+    } catch (e) {
+      console.error('Error deleting user:', e);
+      throw e;
     }
   };
 
@@ -139,7 +272,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addUser,
     updateUser,
     deleteUser,
-    isAdmin: currentUser?.role === 'admin',
+    isAdmin: currentUser?.role === 'admin' || currentUser?.name === 'admin',
+    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -34,15 +34,12 @@ export function Login() {
     setError('');
     setLoading(true);
 
-    // Simular delay para mejor UX
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const result = login(username, password);
+    const result = await login(username, password);
 
     if (!result.success) {
       setError(result.error || 'Error al iniciar sesión');
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (

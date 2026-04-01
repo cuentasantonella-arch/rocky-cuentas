@@ -383,7 +383,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 }}
               >
                 <div className="p-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{currentUser?.username}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{currentUser?.name}</p>
                 </div>
                 <button
                   onClick={handleLogout}

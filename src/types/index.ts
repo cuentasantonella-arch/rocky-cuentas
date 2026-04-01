@@ -75,12 +75,11 @@ export type UserRole = 'admin' | 'collaborator';
 
 export interface User {
   id: string;
-  username: string;
-  passwordHash: string;
-  role: UserRole;
   name: string;
-  createdAt: string;
-  lastLogin?: string;
+  email?: string;
+  role: UserRole;
+  password: string;
+  createdAt?: string;
 }
 
 export interface AuthState {
@@ -90,11 +89,10 @@ export interface AuthState {
 
 export const DEFAULT_ADMIN_USER: User = {
   id: 'admin',
-  username: 'admin',
-  passwordHash: 'admin123', // En producción usar hash
+  name: 'admin',
+  email: 'admin@localhost',
   role: 'admin',
-  name: 'Administrador',
-  createdAt: new Date().toISOString(),
+  password: 'admin123',
 };
 
 export interface Settings {

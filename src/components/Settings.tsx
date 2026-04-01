@@ -126,7 +126,6 @@ export function SettingsPanel() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [userFormData, setUserFormData] = useState({
-    username: '',
     name: '',
     role: 'collaborator' as UserRole,
     password: '',
@@ -159,7 +158,6 @@ export function SettingsPanel() {
     if (user) {
       setEditingUser(user);
       setUserFormData({
-        username: user.username,
         name: user.name,
         role: user.role,
         password: '', // Don't show password
@@ -167,7 +165,6 @@ export function SettingsPanel() {
     } else {
       setEditingUser(null);
       setUserFormData({
-        username: '',
         name: '',
         role: 'collaborator',
         password: '',
@@ -192,26 +189,24 @@ export function SettingsPanel() {
       return;
     }
 
-    if (!userFormData.username.trim() || !userFormData.name.trim()) {
+    if (!userFormData.name.trim()) {
       setUserError('Todos los campos son requeridos');
       return;
     }
 
     try {
       if (editingUser) {
-        const updatedUser: UserType = {
+        const updatedUser = {
           ...editingUser,
-          username: userFormData.username.trim(),
           name: userFormData.name.trim(),
           role: userFormData.role,
         };
         if (userFormData.password) {
-          updatedUser.passwordHash = userFormData.password;
+          (updatedUser as any).password = userFormData.password;
         }
         updateUser(updatedUser);
       } else {
         addUser({
-          username: userFormData.username.trim(),
           name: userFormData.name.trim(),
           role: userFormData.role,
           password: userFormData.password,
@@ -584,7 +579,7 @@ export function SettingsPanel() {
                             <User className="w-4 h-4 text-gray-400" />
                           )}
                         </div>
-                        <span className="text-white">@{user.username}</span>
+                        <span className="text-white">@{user.name}</span>
                         {currentUser?.id === user.id && (
                           <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-xs rounded">Tú</span>
                         )}
@@ -655,8 +650,8 @@ export function SettingsPanel() {
                 </label>
                 <input
                   type="text"
-                  value={userFormData.username}
-                  onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
+                  value={userFormData.name}
+                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
                   className="w-full px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="usuario123"
                   required
@@ -664,20 +659,6 @@ export function SettingsPanel() {
                 <p className="text-xs text-gray-500 mt-1">
                   Este será el nombre para iniciar sesión
                 </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  value={userFormData.name}
-                  onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Juan Pérez"
-                  required
-                />
               </div>
 
               <div>
