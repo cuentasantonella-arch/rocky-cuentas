@@ -204,7 +204,13 @@ export function PasswordRecovery({ onBack, onComplete }: PasswordRecoveryProps) 
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/20 via-purple-900/10 to-pink-900/20" />
+      {/* Fondo con imagen */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/images/background-login.jpg')" }}
+      />
+      {/* Overlay oscuro para legibilidad */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div className="relative w-full max-w-md">
         <div className="bg-[#16213e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden">
