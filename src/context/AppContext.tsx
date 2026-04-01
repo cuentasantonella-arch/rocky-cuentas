@@ -320,7 +320,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }));
       }
 
-      payload.instructives = DEFAULT_INSTRUCTIVES;
+      // Cargar instructivos desde Supabase
+      const { data: instructives, error: instructivesError } = await supabase
+        .from('instructives')
+        .select('*');
+
+      if (instructivesError) {
+        console.error('❌ Error cargando instructivos:', instructivesError);
+      }
+
+      if (instructives && instructives.length > 0) {
+        payload.instructives = instructives.map(i => ({
+          id: i.id,
+          title: i.title,
+          content: i.content,
+          imageUrl: i.image_url || '',
+          createdAt: i.created_at,
+          updatedAt: i.updated_at,
+        }));
+      } else {
+        // Si no hay instructivos, usar los defaults y guardarlos en Supabase
+        payload.instructives = DEFAULT_INSTRUCTIVES;
+        // Guardar instructivos por defecto en Supabase
+        for (const instructive of DEFAULT_INSTRUCTIVES) {
+          await supabase.from('instructives').upsert({
+            id: instructive.id,
+            title: instructive.title,
+            content: instructive.content,
+            image_url: instructive.imageUrl || '',
+            created_at: instructive.createdAt,
+            updated_at: instructive.updatedAt,
+          }, { onConflict: 'id' });
+        }
+      }
 
       dispatch({ type: 'SET_STATE', payload });
       setIsOnline(true);
@@ -375,6 +407,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEYS.clients, JSON.stringify(state.clients));
         localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
         localStorage.setItem(STORAGE_KEYS.activityLog, JSON.stringify(state.activityLog));
+        localStorage.setItem(STORAGE_KEYS.instructives, JSON.stringify(state.instructives));
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
