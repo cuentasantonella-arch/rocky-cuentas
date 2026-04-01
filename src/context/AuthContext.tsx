@@ -83,11 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }));
         setUsers(mappedUsers);
       } else {
-        // Crear usuario admin por defecto si no existe
-        await createDefaultAdmin();
+        // No hay usuarios en Supabase, usar admin local
+        setUsers([DEFAULT_ADMIN]);
       }
     } catch (e) {
       console.error('Error loading users:', e);
+      // Fallback a admin local
       setUsers([DEFAULT_ADMIN]);
     }
   };
@@ -125,10 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Login - verifica contra Supabase
+  // Login - verifica contra Supabase con fallback local
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Primero buscar en Supabase
+      // Primero verificar con el default admin local
+      if (username.toLowerCase() === 'admin' && password === 'admin123') {
+        setCurrentUser(DEFAULT_ADMIN);
+        return { success: true };
+      }
+
+      // Buscar en Supabase
       const { data, error } = await supabase
         .from('clients')
         .select('id, name, email, role, password')
@@ -136,9 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error || !data) {
-        // Si no existe, verificar con el default admin
-        if (username.toLowerCase() === 'admin' && password === 'admin123') {
-          setCurrentUser(DEFAULT_ADMIN);
+        // Si no existe en Supabase, verificar en usuarios locales
+        const localUser = users.find(u => u.name.toLowerCase() === username.toLowerCase());
+        if (localUser && localUser.password === password) {
+          setCurrentUser(localUser);
           return { success: true };
         }
         return { success: false, error: 'Usuario no encontrado' };
@@ -160,12 +168,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     } catch (e) {
       console.error('Login error:', e);
-      // Fallback al admin local
+      // Fallback total - buscar en usuarios locales cargados
       if (username.toLowerCase() === 'admin' && password === 'admin123') {
         setCurrentUser(DEFAULT_ADMIN);
         return { success: true };
       }
-      return { success: false, error: 'Error al iniciar sesión' };
+      const localUser = users.find(u => u.name.toLowerCase() === username.toLowerCase());
+      if (localUser && localUser.password === password) {
+        setCurrentUser(localUser);
+        return { success: true };
+      }
+      return { success: false, error: 'Error al conectar con servidor' };
     }
   };
 
