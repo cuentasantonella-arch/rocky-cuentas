@@ -180,7 +180,7 @@ export function SettingsPanel() {
     setUserError('');
   };
 
-  const handleUserSubmit = (e: React.FormEvent) => {
+  const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUserError('');
 
@@ -196,23 +196,28 @@ export function SettingsPanel() {
 
     try {
       if (editingUser) {
-        const updatedUser = {
+        const updatedUser: UserType = {
           ...editingUser,
           name: userFormData.name.trim(),
           role: userFormData.role,
         };
         if (userFormData.password) {
-          (updatedUser as any).password = userFormData.password;
+          updatedUser.password = userFormData.password;
         }
-        updateUser(updatedUser);
+        await updateUser(updatedUser);
+        handleCloseUserModal();
       } else {
-        addUser({
+        const result = await addUser({
           name: userFormData.name.trim(),
           role: userFormData.role,
           password: userFormData.password,
         });
+        if (result.success) {
+          handleCloseUserModal();
+        } else {
+          setUserError(result.error || 'Error al crear usuario');
+        }
       }
-      handleCloseUserModal();
     } catch (error) {
       setUserError(error instanceof Error ? error.message : 'Error al guardar usuario');
     }
