@@ -53,6 +53,20 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [copiedProfile, setCopiedProfile] = useState<string | null>(null);
   // Estado para selección múltiple
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
+  // Estado para pestañas por producto
+  const [selectedProductTab, setSelectedProductTab] = useState<string>('all');
+
+  // Limpiar filtro de producto cuando se cambia de pestaña
+  const handleTabChange = (productName: string) => {
+    setSelectedProductTab(productName);
+    setFilterProduct(''); // Limpiar el dropdown de producto
+  };
+
+  // Obtener productos únicos que tienen cuentas
+  const productsWithAccounts = useMemo(() => {
+    const productNames = new Set(accounts.map(acc => acc.productType));
+    return state.products.filter(p => productNames.has(p.name));
+  }, [accounts, state.products]);
 
   // Función para marcar/desmarcar perfil como vendido
   const handleToggleProfileSold = (account: Account, profileSlot: number) => {
@@ -359,6 +373,11 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const filteredAndSortedAccounts = useMemo(() => {
     let result = [...accounts];
 
+    // Filtrar por pestaña de producto
+    if (selectedProductTab !== 'all') {
+      result = result.filter((acc) => acc.productType === selectedProductTab);
+    }
+
     // Filtrar por búsqueda
     if (search) {
       const searchLower = search.toLowerCase();
@@ -371,7 +390,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       );
     }
 
-    // Filtrar por producto
+    // Filtrar por producto (dropdown)
     if (filterProduct) {
       result = result.filter((acc) => acc.productType === filterProduct);
     }
@@ -415,7 +434,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     });
 
     return result;
-  }, [accounts, search, filterProduct, filterProvider, filterStatus, filterSale, sortField, sortDirection, state.settings.alarmDays]);
+  }, [accounts, search, filterProduct, filterProvider, filterStatus, filterSale, sortField, sortDirection, state.settings.alarmDays, selectedProductTab]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -463,6 +482,48 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
   return (
     <div className="bg-[#16213e] rounded-xl overflow-hidden">
+      {/* Pestañas por producto */}
+      <div className="p-4 border-b border-gray-700/50">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => handleTabChange('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              selectedProductTab === 'all'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                : 'bg-[#0f0f1a] text-gray-400 hover:text-white hover:bg-gray-800'
+            }`}
+          >
+            Todas ({accounts.length})
+          </button>
+          {productsWithAccounts.map((product) => {
+            const count = accounts.filter(acc => acc.productType === product.name).length;
+            return (
+              <button
+                key={product.id}
+                onClick={() => handleTabChange(product.name)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  selectedProductTab === product.name
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-[#0f0f1a] text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                {product.imageUrl && (
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-5 h-5 object-contain rounded"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                )}
+                {product.name} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Filtros */}
       {showFilters && (
         <div className="p-4 border-b border-gray-700/50">
