@@ -271,26 +271,45 @@ Estamos siempre disponibles para ayudarte 💙
     id: 'chatgpt',
     title: 'ChatGPT Plus',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png',
-    content: `🤖 INSTRUCTIVO CHATGPT PLUS
+    content: `📘 Instructivo para Activar ChatGPT (Cuenta de Equipo)
 
-1. Ingresa a: chat.openai.com
-2. Haz clic en "Log In" (Iniciar sesión)
-3. Ingresa el correo electrónico proporcionado
-4. Ingresa la contraseña (o usa el correo del cliente)
-5. ¡Accede a GPT-4 y funciones avanzadas!
+1️⃣ Inicie sesión en ChatGPT
 
-✨ CARACTERÍSTICAS:
-- Acceso a GPT-4 (más inteligente)
-- DALL-E para generar imágenes
-- Análisis de datos y archivos
-- Plugins y GPTs personalizados
-- Respuestas más rápidas
+Abra su cuenta de ChatGPT, ya sea desde la aplicación o desde la página web.
 
-⚠️ IMPORTANTE:
-- No cambies la contraseña
-- No recuperes el acceso desde otro dispositivo
-- Si pierdes acceso, contactar al vendedor
-- Para activar, usa el correo del cliente`,
+2️⃣ Revise su correo electrónico 📧
+
+Busque el correo de invitación para unirse al equipo de trabajo.
+
+3️⃣ Acepte la invitación ✅
+
+Haga clic en "Aceptar invitación" para unirse al equipo.
+
+4️⃣ Redirección automática 🔄
+
+Después de aceptar la invitación, será redirigido automáticamente a ChatGPT.
+
+5️⃣ Seleccione la cuenta 👤
+
+El sistema le pedirá elegir con qué cuenta desea trabajar:
+
+Cuenta personal
+
+Cuenta del equipo de trabajo
+
+➡️ Seleccione la cuenta del equipo de trabajo.
+
+6️⃣ Activación completada 🎉
+
+Una vez seleccionada la cuenta de trabajo, su ChatGPT Plus quedará activado.
+
+⚠️ Importante:
+
+Si adquiere un plan por más de 3 meses, las cuentas pueden cambiar mes a mes.
+
+Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para evitar pérdida de información.
+
+✔️ ¡Listo! Su cuenta ya estará configurada y lista para usar.`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
