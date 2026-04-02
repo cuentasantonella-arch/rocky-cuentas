@@ -271,7 +271,7 @@ Estamos siempre disponibles para ayudarte 💙
     icon: 'film',
     plans: ['Básico', 'Premium'],
     color: '#7B2CBF',
-    imageUrl: 'https://lookaside.fbsbx.com/lookaside/crawler/media/?media_id=61583013785262',
+    imageUrl: '/images/maxplayer-logo.png',
     instructive: `📺 INSTRUCTIVO DE USO – MAX PLAYER 🎬
 
 ¡Hola! 😃 Te dejamos los pasos para ingresar correctamente y disfrutar tu servicio de televisión con Max Player 👇

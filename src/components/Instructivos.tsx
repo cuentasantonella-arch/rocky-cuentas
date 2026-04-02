@@ -139,6 +139,9 @@ export function Instructivos() {
     if (nameLower.includes('crunchyroll')) {
       return 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png';
     }
+    if (nameLower.includes('maxplayer') || nameLower.includes('max player')) {
+      return '/images/maxplayer-logo.png';
+    }
     return '';
   };
 
