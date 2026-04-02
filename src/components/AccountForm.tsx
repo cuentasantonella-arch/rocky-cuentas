@@ -178,7 +178,11 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       newErrors.email = `Ya existe una cuenta con este email en ${formData.productType}`;
     }
 
-    if (!formData.password.trim()) newErrors.password = 'La contraseña es requerida';
+    // Para ChatGPT, la contraseña es opcional porque se usa el email del cliente para activar
+    const isChatGPT = formData.productType === 'ChatGPT Plus';
+    if (!isChatGPT && !formData.password.trim()) {
+      newErrors.password = 'La contraseña es requerida';
+    }
     if (!formData.productType) newErrors.productType = 'Selecciona un producto';
     if (!formData.plan) newErrors.plan = 'Selecciona un plan';
 
@@ -246,7 +250,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
     const accountData = {
       email: formData.email.trim(),
-      password: formData.password.trim(),
+      // Para ChatGPT, guardar contraseña solo si se proporcionó
+      password: (formData.productType === 'ChatGPT Plus' && !formData.password.trim())
+        ? 'N/A'
+        : formData.password.trim(),
       productType: formData.productType,
       plan: formData.plan,
       // Usar el nombre del cliente principal solo si no hay perfiles, o el primer perfil asignado
@@ -327,7 +334,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Contraseña *
+                    Contraseña {formData.productType !== 'ChatGPT Plus' && '*'}
+                    {formData.productType === 'ChatGPT Plus' && (
+                      <span className="text-xs font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(Opcional)</span>
+                    )}
                   </label>
                   <div className="relative">
                     <input
@@ -339,7 +349,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                         errors.password ? 'border-red-500' : ''
                       }`}
                       style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
-                      placeholder="Contraseña"
+                      placeholder={formData.productType === 'ChatGPT Plus' ? 'Se usa email del cliente' : 'Contraseña'}
                     />
                     <button
                       type="button"
@@ -351,6 +361,11 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     </button>
                   </div>
                   {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                  {formData.productType === 'ChatGPT Plus' && (
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                      Para ChatGPT se usa el email del cliente para activar la cuenta
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
