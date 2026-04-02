@@ -482,33 +482,32 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
   return (
     <div className="bg-[#16213e] rounded-xl overflow-hidden">
-      {/* Pestañas por producto - Estilo iconos */}
+      {/* Pestañas por producto - Estilo iconos con nombre */}
       <div className="p-3 border-b border-gray-700/50">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
           {/* Botón Todas */}
           <button
             onClick={() => handleTabChange('all')}
-            className={`group relative w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+            className={`group flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
               selectedProductTab === 'all'
                 ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30'
                 : 'bg-[#0f0f1a] hover:bg-gray-800'
             }`}
             title={`Todas (${accounts.length})`}
           >
-            <div className="text-center">
-              <span className={`text-lg font-bold ${selectedProductTab === 'all' ? 'text-white' : 'text-gray-400'}`}>📋</span>
-              {/* Badge con contador */}
-              <div className={`absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                selectedProductTab === 'all'
-                  ? 'bg-white text-indigo-600'
-                  : 'bg-indigo-600 text-white'
-              }`}>
-                {accounts.length}
-              </div>
+            <span className={`text-xl ${selectedProductTab === 'all' ? 'text-white' : 'text-gray-400'}`}>📋</span>
+            <span className={`text-xs font-medium ${selectedProductTab === 'all' ? 'text-white' : 'text-gray-400'}`}>Todas</span>
+            {/* Badge con contador */}
+            <div className={`absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+              selectedProductTab === 'all'
+                ? 'bg-white text-indigo-600'
+                : 'bg-indigo-600 text-white'
+            }`}>
+              {accounts.length}
             </div>
           </button>
 
-          {/* Iconos de productos */}
+          {/* Iconos de productos con nombre */}
           {productsWithAccounts.map((product) => {
             const count = accounts.filter(acc => acc.productType === product.name).length;
             const isSelected = selectedProductTab === product.name;
@@ -516,12 +515,12 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
               <button
                 key={product.id}
                 onClick={() => handleTabChange(product.name)}
-                className={`group relative w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                   isSelected
                     ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30'
                     : 'bg-[#0f0f1a] hover:bg-gray-800'
                 }`}
-                title={product.name}
+                title={`${product.name} (${count} cuentas)`}
               >
                 {product.imageUrl ? (
                   <img
@@ -539,6 +538,11 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                     {product.name.charAt(0)}
                   </span>
                 )}
+                <span className={`text-xs font-medium max-w-16 truncate ${
+                  isSelected ? 'text-white' : 'text-gray-400'
+                }`}>
+                  {product.name}
+                </span>
                 {/* Badge con contador */}
                 <div className={`absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                   isSelected
