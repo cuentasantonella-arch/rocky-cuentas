@@ -469,6 +469,21 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
 
 ✔️ ¡Listo! Su cuenta ya estará configurada y lista para usar.`,
   },
+  {
+    id: '18',
+    name: 'HBO Max Enlazar TV',
+    icon: 'tv-2',
+    plans: ['Enlazar TV'],
+    color: '#B535F6',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
+    instructive: `🔹📺✨ ENLAZAR TV A HBO MAX
+
+✅ A continuación, te compartimos un video explicativo súper útil para aprender cómo vincular tu TV a tu cuenta de HBO Max de forma rápida y sencilla 🔗📱:
+
+🔗 https://www.youtube.com/watch?v=b9jFlvDaULQ
+
+🚀 ¡Sigue el paso a paso y disfruta de todo tu contenido favorito sin complicaciones!`,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
