@@ -419,6 +419,96 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadFromSupabase();
   }, []);
 
+  // Suscripciones en tiempo real para productos e instructivos
+  useEffect(() => {
+    if (!isOnline) return;
+
+    console.log('🔔 Configurando suscripciones en tiempo real...');
+
+    // Suscripción para productos
+    const productsChannel = supabase
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+        },
+        (payload) => {
+          console.log('📦 Cambio en productos:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newProduct = {
+              id: payload.new.id,
+              name: payload.new.name,
+              icon: payload.new.icon || 'tv',
+              plans: payload.new.plans || [],
+              color: payload.new.color || '#6366f1',
+              imageUrl: payload.new.image_url || '',
+            };
+            dispatch({ type: 'ADD_PRODUCT', payload: newProduct });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedProduct = {
+              id: payload.new.id,
+              name: payload.new.name,
+              icon: payload.new.icon || 'tv',
+              plans: payload.new.plans || [],
+              color: payload.new.color || '#6366f1',
+              imageUrl: payload.new.image_url || '',
+            };
+            dispatch({ type: 'UPDATE_PRODUCT', payload: updatedProduct });
+          } else if (payload.eventType === 'DELETE') {
+            dispatch({ type: 'DELETE_PRODUCT', payload: payload.old.id });
+          }
+        }
+      )
+      .subscribe();
+
+    // Suscripción para instructivos
+    const instructivesChannel = supabase
+      .channel('instructives-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'instructives',
+        },
+        (payload) => {
+          console.log('📝 Cambio en instructivos:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newInstructive = {
+              id: payload.new.id,
+              title: payload.new.title,
+              content: payload.new.content,
+              imageUrl: payload.new.image_url || '',
+              createdAt: payload.new.created_at,
+              updatedAt: payload.new.updated_at,
+            };
+            dispatch({ type: 'ADD_INSTRUCTIVE', payload: newInstructive });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedInstructive = {
+              id: payload.new.id,
+              title: payload.new.title,
+              content: payload.new.content,
+              imageUrl: payload.new.image_url || '',
+              createdAt: payload.new.created_at,
+              updatedAt: payload.new.updated_at,
+            };
+            dispatch({ type: 'UPDATE_INSTRUCTIVE', payload: updatedInstructive });
+          } else if (payload.eventType === 'DELETE') {
+            dispatch({ type: 'DELETE_INSTRUCTIVE', payload: payload.old.id });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(instructivesChannel);
+    };
+  }, [isOnline]);
+
   // Función para refrescar datos
   const refreshData = async () => {
     await loadFromSupabase();
