@@ -217,39 +217,27 @@ export const DEFAULT_INSTRUCTIVES: Instructive[] = [
 
 ¡Gracias por tu compra! 🙌 A continuación, te explicamos todo lo que necesitas saber sobre el uso y garantía de tu cuenta:
 
-─────────────────────────────────────────
-
-👁️ OJO CON LA NUEVA FORMA PARA INGRESAR CON CONTRASEÑA DESDE PC Y CELULAR:
-
+OJO CON LA NUEVA FORMA PARA INGRESAR CON CONTRASEÑA DESDE PC Y CELULAR:
 👉 Instrucciones aquí:
 🔗 https://postimg.cc/NyqCkQdp
 
-─────────────────────────────────────────
-
 📌 USO CORRECTO DE LA CUENTA
-
 La cuenta debe utilizarse solo en la cantidad de pantallas o dispositivos incluidos en el plan que compraste.
 
 ➡️ Ejemplo: Si adquiriste un plan de 1 pantalla y lo usás en tu TV, no podés instalarlo en otro dispositivo, aunque no estés usando el primero.
 
 ⚠️ IMPORTANTE:
-
 Cambiar de dispositivo sin autorización puede provocar el bloqueo de la cuenta.
-
 En caso de mal uso, la garantía se anula automáticamente y no hay derecho a reclamo.
 
 👉 Si necesitas usar Netflix en más dispositivos, te recomendamos contratar un plan que se ajuste a tus necesidades.
 
-─────────────────────────────────────────
-
 📣 MENSAJE QUE PUEDE APARECER A LOS 20 DÍAS
-
 A partir del día 20 de uso, puede aparecer el siguiente mensaje:
 
 🛑 "Tu cuenta no es parte de Grupo Hogar"
 
 🔄 ¡No te preocupes! Es completamente normal.
-
 Dependiendo del dispositivo que estés usando, seguí las siguientes instrucciones:
 
 📺 EN SMART TV:
@@ -259,24 +247,17 @@ Dependiendo del dispositivo que estés usando, seguí las siguientes instruccion
 📱 EN DISPOSITIVOS MÓVILES:
 👉 Instrucciones aquí:
 🔗 https://postimg.cc/Jyrs2mNW
-
 Presioná "Ver temporalmente", luego enviá un mail solicitando el código.
 
 📩 Una vez que completes los pasos, escríbenos para enviarte el código de hogar.
 
-─────────────────────────────────────────
-
 ⏳ SI CONTRATASTE UN PLAN MAYOR A 1 MES:
-
 La primera cuenta tiene una duración de 30 días.
-
 Al finalizar, nos avisas y te enviaremos una nueva cuenta para seguir usando el servicio.
 
 🔁 Este proceso se repite mes a mes hasta completar el tiempo total contratado.
 
 ✅ Solo los planes de 4 pantallas permiten uso continuo sin cambio de cuenta.
-
-─────────────────────────────────────────
 
 💬 ¿Dudas o consultas?
 Estamos siempre disponibles para ayudarte 💙
