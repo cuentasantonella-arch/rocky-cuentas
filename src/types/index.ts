@@ -210,27 +210,6 @@ export const DEFAULT_SETTINGS: Settings = {
 // Instructivos predeterminados
 export const DEFAULT_INSTRUCTIVES: Instructive[] = [
   {
-    id: 'chatgpt',
-    title: 'ChatGPT',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png',
-    content: `📱 INSTRUCTIVO CHATGPT PLUS
-
-1. Ingresa a: chat.openai.com
-2. Haz clic en "Log In" (Iniciar sesión)
-3. Ingresa el correo electrónico proporcionado
-4. Ingresa la contraseña proporcionada
-5. Si te pide verificar, revisa tu correo
-
-⚠️ IMPORTANTE:
-- No cambies la contraseña
-- No recuperes el acceso desde otro dispositivo
-- Si pierdes acceso, contactar al vendedor
-
-¿Necesitas ayuda? Contacta a tu proveedor.`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
     id: 'netflix',
     title: 'Netflix',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
@@ -245,9 +224,38 @@ export const DEFAULT_INSTRUCTIVES: Instructive[] = [
 📋 PLAN: [PLAN]
 👤 PERFILES: Tienes [N] perfiles disponibles
 
+✨ CARACTERÍSTICAS:
+- Calidad hasta 4K Ultra HD
+- Descarga para ver offline
+- Perfiles ilimitados según tu plan
+
 ⚠️ IMPORTANTE:
 - No cambies el correo ni la contraseña
+- No recuperes la cuenta desde otro dispositivo
 - Si necesitas ayuda, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'primevideo',
+    title: 'PrimeVideo',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/3840px-Amazon_Prime_Video_logo.svg.png',
+    content: `📺 INSTRUCTIVO PRIME VIDEO
+
+1. Descarga Prime Video o ingresa a: primevideo.com
+2. Inicia sesión con tu cuenta Amazon
+3. Usa el correo electrónico proporcionado
+4. Usa la contraseña proporcionada
+5. ¡Disfruta de películas y series!
+
+✨ CARACTERÍSTICAS:
+- Contenido de Amazon Prime incluido
+- Canales adicionales disponibles
+- Descarga para ver offline
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Si tienes problemas, contacta a tu proveedor`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -266,11 +274,259 @@ export const DEFAULT_INSTRUCTIVES: Instructive[] = [
 ✨ CARACTERÍSTICAS:
 - Sin anuncios publicitarios
 - Reproducción offline
-- Calidad de audio alta
+- Calidad de audio alta (320 kbps)
+- Saltar canciones sin límite
+- Reproducción en orden aleatorio desactivada
 
 ⚠️ IMPORTANTE:
 - No modifiques la cuenta
+- No vincules con Facebook/Google
 - Contacta a tu proveedor ante cualquier problema`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'deezer',
+    title: 'Deezer Premium',
+    imageUrl: 'https://download.logo.wine/logo/Deezer/Deezer-Logo.wine.png',
+    content: `🎧 INSTRUCTIVO DEEZER PREMIUM
+
+1. Descarga Deezer o ingresa a: deezer.com
+2. Haz clic en "Iniciar sesión"
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña proporcionada
+5. ¡Disfruta de 100 millones de canciones!
+
+✨ CARACTERÍSTICAS:
+- Sin anuncios
+- Modo offline
+- Calidad HiFi disponible
+- Flow personalizado
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Contacta a tu proveedor ante cualquier duda`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'disney',
+    title: 'Disney+',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png',
+    content: `🏰 INSTRUCTIVO DISNEY+
+
+1. Descarga Disney+ o ingresa a: disneyplus.com
+2. Haz clic en "Iniciar sesión"
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña proporcionada
+5. ¡Listo! Star Wars, Marvel, Pixar y más
+
+✨ CARACTERÍSTICAS:
+- Disney, Pixar, Marvel, Star Wars, National Geographic
+- Contenido en 4K según disponibilidad
+- Descarga para ver offline
+- Perfiles múltiples
+
+⚠️ IMPORTANTE:
+- No recuperes la cuenta desde otro dispositivo
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'hbo',
+    title: 'HBO Max',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
+    content: `🎬 INSTRUCTIVO HBO MAX
+
+1. Descarga HBO Max o ingresa a: hbomax.com
+2. Haz clic en "Iniciar sesión"
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña proporcionada
+5. ¡Disfruta de HBO original!
+
+✨ CARACTERÍSTICAS:
+- Series y películas HBO originales
+- Contenido de DC, Warner Bros
+- Descarga para ver offline
+- Perfiles familiares
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Contacta a tu proveedor ante cualquier problema`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'crunchyroll',
+    title: 'Crunchyroll',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png',
+    content: `🇯🇵 INSTRUCTIVO CRUNCHYROLL
+
+1. Descarga Crunchyroll o ingresa a: crunchyroll.com
+2. Haz clic en "Iniciar sesión"
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña proporcionada
+5. ¡Disfruta de anime en subtítulos!
+
+✨ CARACTERÍSTICAS:
+- Anime subtitulado y doblado
+- Nuevos episodios cada semana
+- Contenido simulcast
+- Sin anuncios en Premium
+
+⚠️ IMPORTANTE:
+- No recuperes la cuenta desde otro dispositivo
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'youtube',
+    title: 'YouTube Premium',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/YouTube_Premium_logo.svg/1280px-YouTube_Premium_logo.svg.png',
+    content: `▶️ INSTRUCTIVO YOUTUBE PREMIUM
+
+1. Descarga YouTube o ingresa a: youtube.com
+2. Inicia sesión con la cuenta proporcionada
+3. Usa el correo electrónico indicado
+4. Usa la contraseña proporcionada
+5. ¡Sin anuncios en todos los videos!
+
+✨ CARACTERÍSTICAS:
+- Sin anuncios publicitarios
+- YouTube Music incluido
+- Reproducción en segundo plano
+- Descarga para ver offline
+- Reproducción en TV desde el celular
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- No recuperes la cuenta desde otro dispositivo
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'chatgpt',
+    title: 'ChatGPT Plus',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png',
+    content: `🤖 INSTRUCTIVO CHATGPT PLUS
+
+1. Ingresa a: chat.openai.com
+2. Haz clic en "Log In" (Iniciar sesión)
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña (o usa el correo del cliente)
+5. ¡Accede a GPT-4 y funciones avanzadas!
+
+✨ CARACTERÍSTICAS:
+- Acceso a GPT-4 (más inteligente)
+- DALL-E para generar imágenes
+- Análisis de datos y archivos
+- Plugins y GPTs personalizados
+- Respuestas más rápidas
+
+⚠️ IMPORTANTE:
+- No cambies la contraseña
+- No recuperes el acceso desde otro dispositivo
+- Si pierdes acceso, contactar al vendedor
+- Para activar, usa el correo del cliente`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'gemini',
+    title: 'Gemini Pro',
+    imageUrl: 'https://logos-world.net/wp-content/uploads/2025/02/Google-Gemini-Logo.png',
+    content: `💎 INSTRUCTIVO GEMINI PRO
+
+1. Ingresa a: gemini.google.com
+2. Inicia sesión con la cuenta proporcionada
+3. Usa el correo electrónico indicado
+4. ¡Accede a Gemini Advanced!
+
+✨ CARACTERÍSTICAS:
+- Acceso a Gemini Ultra 1.0
+- IA más avanzada de Google
+- Integración con Google apps
+- 2TB de almacenamiento en Google One
+- Gemini en WhatsApp
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- No recuperes la cuenta desde otro dispositivo
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'paramount',
+    title: 'Paramount+',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png',
+    content: `🎬 INSTRUCTIVO PARAMOUNT+
+
+1. Descarga Paramount+ o ingresa a: paramountplus.com
+2. Haz clic en "Iniciar sesión"
+3. Ingresa el correo electrónico proporcionado
+4. Ingresa la contraseña proporcionada
+5. ¡Disfruta de CBS, Paramount, MTV y más!
+
+✨ CARACTERÍSTICAS:
+- Series de CBS, Paramount Pictures
+- Contenido de MTV, BET, Comedy Central
+- Sports en vivo (según plan)
+- Descarga para ver offline
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'maxplayer',
+    title: 'MaxPlayer',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0f/MX_Player_Logo.png',
+    content: `🎬 INSTRUCTIVO MAXPLAYER
+
+1. Descarga MaxPlayer o ingresa a la app
+2. Inicia sesión con tu cuenta
+3. Usa el correo proporcionado
+4. Usa la contraseña proporcionada
+5. ¡Disfruta de películas y series!
+
+✨ CARACTERÍSTICAS:
+- Contenido variado de películas
+- Series populares
+- Descarga para ver offline
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Si tienes problemas, contacta a tu proveedor`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tntsports',
+    title: 'TNT Sports Premium',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png',
+    content: `⚽ INSTRUCTIVO TNT SPORTS PREMIUM
+
+1. Descarga TNT Sports o ingresa a la app
+2. Inicia sesión con tu cuenta
+3. Usa el correo proporcionado
+4. Usa la contraseña proporcionada
+5. ¡Disfruta de deportes en vivo!
+
+✨ CARACTERÍSTICAS:
+- Transmisiones deportivas en vivo
+- UEFA Champions League
+- UEFA Europa League
+- NFL, NBA y más según plan
+
+⚠️ IMPORTANTE:
+- No cambies los datos de la cuenta
+- Si tienes problemas, contacta a tu proveedor`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
