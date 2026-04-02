@@ -297,7 +297,7 @@ export function Instructivos() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
           {productsWithInstructives.map((product) => {
             const imageUrl = product.imageUrl || getDefaultImage(product.name);
             const isCopied = copiedId === product.id;
@@ -305,71 +305,59 @@ export function Instructivos() {
             return (
               <div
                 key={product.id}
-                className="bg-[#16213e] rounded-xl border border-gray-700/50 overflow-hidden hover:border-indigo-500/50 transition-all group"
+                className="bg-[#16213e] rounded-lg border border-gray-700/50 overflow-hidden hover:border-indigo-500/50 transition-all group cursor-pointer"
               >
-                {/* Image */}
-                <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                {/* Image pequeño */}
+                <div className="relative h-16 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-contain p-4"
+                      className="w-full h-full object-contain p-2"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
                   ) : (
-                    <FileText className="w-12 h-12 text-gray-600" />
+                    <FileText className="w-6 h-6 text-gray-600" />
                   )}
 
-                  {/* Overlay buttons */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  {/* Overlay buttons compactos */}
+                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                     <button
                       onClick={() => handleCopy(product)}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-1.5 rounded-lg transition-colors ${
                         isCopied
                           ? 'bg-green-600 text-white'
                           : 'bg-indigo-600 hover:bg-indigo-500 text-white'
                       }`}
-                      title="Copiar instructivo"
+                      title="Copiar"
                     >
-                      {isCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                      {isCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     </button>
                     <button
                       onClick={() => handleEdit(product)}
-                      className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                      className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
                       title="Editar"
                     >
-                      <Edit2 className="w-5 h-5" />
+                      <Edit2 className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => handleDelete(product)}
-                      className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                      className="p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
                       title="Eliminar"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
-
-                  {/* Copied badge */}
-                  {isCopied && (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      ¡Copiado!
-                    </div>
-                  )}
                 </div>
 
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-white mb-2 truncate">{product.name}</h3>
-                  <p className="text-sm text-gray-400 line-clamp-2 mb-3">
-                    {(product.instructive || '').substring(0, 80)}
-                    {(product.instructive?.length || 0) > 80 ? '...' : ''}
-                  </p>
+                {/* Content compacto */}
+                <div className="p-1.5">
+                  <h3 className="text-xs font-medium text-white truncate text-center">{product.name}</h3>
                   <button
                     onClick={() => handleCopy(product)}
-                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                    className={`w-full mt-1 py-1 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
                       isCopied
                         ? 'bg-green-600/20 text-green-400'
                         : 'bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30'
@@ -377,13 +365,13 @@ export function Instructivos() {
                   >
                     {isCopied ? (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3 h-3" />
                         ¡Copiado!
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" />
-                        Copiar Instructivo
+                        <Copy className="w-3 h-3" />
+                        Copiar
                       </>
                     )}
                   </button>
