@@ -844,10 +844,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteInstructive = async (id: string) => {
+    console.log('🗑️ Eliminando instructivo:', id);
     try {
-      await supabase.from('instructives').delete().eq('id', id);
+      const { error } = await supabase.from('instructives').delete().eq('id', id);
+      if (error) {
+        console.error('❌ Error eliminando instructivo de Supabase:', error);
+      } else {
+        console.log('✅ Instructivo eliminado de Supabase:', id);
+      }
     } catch (err) {
-      console.error('Error eliminando instructivo:', err);
+      console.error('❌ Error general eliminando instructivo:', err);
     }
     dispatch({ type: 'DELETE_INSTRUCTIVE', payload: id });
   };
