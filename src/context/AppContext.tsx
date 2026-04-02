@@ -330,6 +330,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (instructives && instructives.length > 0) {
+        // Mapear instructivos de Supabase
         payload.instructives = instructives.map(i => ({
           id: i.id,
           title: i.title,
@@ -338,10 +339,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           createdAt: i.created_at,
           updatedAt: i.updated_at,
         }));
+        console.log('✅ Instructivos cargados desde Supabase:', payload.instructives.length);
       } else {
-        // Si no hay instructivos, usar los defaults y guardarlos en Supabase
+        // Si no hay instructivos en Supabase, usar los defaults
         payload.instructives = DEFAULT_INSTRUCTIVES;
-        // Guardar instructivos por defecto en Supabase
+        console.log('📝 No hay instructivos en Supabase, usando defaults:', DEFAULT_INSTRUCTIVES.length);
+        // Guardar instructivos por defecto en Supabase para que estén disponibles
         for (const instructive of DEFAULT_INSTRUCTIVES) {
           await supabase.from('instructives').upsert({
             id: instructive.id,
@@ -901,8 +904,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now,
     };
+    console.log('💾 Guardando instructivo en Supabase:', newInstructive.title);
     try {
-      await supabase.from('instructives').upsert({
+      const { error } = await supabase.from('instructives').upsert({
         id: newInstructive.id,
         title: newInstructive.title,
         content: newInstructive.content || null,
@@ -910,8 +914,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         created_at: newInstructive.createdAt,
         updated_at: newInstructive.updatedAt,
       });
+      if (error) {
+        console.error('❌ Error al guardar instructivo en Supabase:', error);
+      } else {
+        console.log('✅ Instructivo guardado en Supabase:', newInstructive.title);
+      }
     } catch (err) {
-      console.error('Error guardando instructivo:', err);
+      console.error('❌ Error guardando instructivo:', err);
     }
     dispatch({ type: 'ADD_INSTRUCTIVE', payload: newInstructive });
   };
