@@ -8,6 +8,7 @@ import { StatsCards, AlertList } from './StatsCards';
 import { ImportExcel } from './ImportExcel';
 import { ProductManager, ProviderManager } from './Modals';
 import { SettingsPanel } from './Settings';
+import { SyncDiagnostics } from './SyncDiagnostics';
 import { exportBackupExcel, downloadImportTemplate } from '../utils/export';
 
 type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'settings';
@@ -26,6 +27,9 @@ export function Dashboard() {
           Resumen del estado de tus cuentas streaming
         </p>
       </div>
+
+      {/* Sync Diagnostics */}
+      <SyncDiagnostics />
 
       {/* Stats */}
       <StatsCards accounts={state.accounts} />

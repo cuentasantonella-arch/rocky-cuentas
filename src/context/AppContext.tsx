@@ -15,7 +15,8 @@ import {
   calculateExpiryDate,
   generateId,
 } from '../types';
-import { supabase } from '../lib/supabase';
+import { supabase, enableRealtimeForTable } from '../lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 const STORAGE_KEYS = {
   accounts: 'rocky_accounts',
@@ -193,12 +194,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isOnline, setIsOnline] = React.useState(false);
+  const [realtimeStatus, setRealtimeStatus] = React.useState<Record<string, boolean>>({});
 
   // Cargar datos desde Supabase
   const loadFromSupabase = async () => {
     try {
       setIsLoading(true);
       console.log('🔄 Cargando datos desde Supabase...');
+
+      // Intentar habilitar Realtime para todas las tablas
+      console.log('🔔 Configurando Realtime para tablas...');
+      const realtimeResults = await Promise.all([
+        enableRealtimeForTable('accounts'),
+        enableRealtimeForTable('products'),
+        enableRealtimeForTable('instructives'),
+        enableRealtimeForTable('providers'),
+        enableRealtimeForTable('clients'),
+        enableRealtimeForTable('settings'),
+      ]);
+      console.log('📊 Resultados de habilitación de Realtime:', realtimeResults);
 
       // Cargar cuentas
       const { data: accounts, error: accountsError } = await supabase
@@ -210,13 +224,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error('❌ Error cargando cuentas:', accountsError);
       }
 
-      // Cargar productos
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select('*');
+      // Cargar productos - incluyendo instructive
+      let products: any[] = [];
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, icon, plans, color, image_url, instructive');
 
-      if (productsError) {
-        console.error('❌ Error cargando productos:', productsError);
+        if (error) {
+          console.error('❌ Error cargando productos:', error);
+          // Usar defaults si falla
+          products = [];
+        } else {
+          products = data || [];
+          console.log('✅ Productos cargados desde Supabase:', products.length);
+        }
+      } catch (err) {
+        console.error('❌ Excepción cargando productos:', err);
+        products = [];
       }
 
       // Cargar proveedores
@@ -274,17 +299,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.log('✅ Cuentas cargadas:', payload.accounts.length);
       }
 
+      // Cargar productos de Supabase y siempre combinar con instructivos de DEFAULT_PRODUCTS
       if (products && products.length > 0) {
-        payload.products = products.map(p => ({
-          id: p.id,
-          name: p.name,
-          icon: p.icon || 'tv',
-          plans: p.plans || [],
-          color: p.color || '#6366f1',
-          imageUrl: p.image_url || '',
-        }));
+        // Combinar: usar datos de Supabase pero SIEMPRE agregar instructivos de defaults
+        payload.products = products.map(p => {
+          // Buscar el producto default correspondiente para obtener instructivo
+          const defaultProd = DEFAULT_PRODUCTS.find(
+            dp => dp.name.toLowerCase() === p.name?.toLowerCase() || dp.id === p.id
+          );
+
+          // SIEMPRE usar el instructive del default (prioridad)
+          const instructive = defaultProd?.instructive || p.instructive || '';
+
+          return {
+            id: p.id,
+            name: p.name || defaultProd?.name || 'Producto',
+            icon: p.icon || defaultProd?.icon || 'tv',
+            plans: p.plans || defaultProd?.plans || [],
+            color: p.color || defaultProd?.color || '#6366f1',
+            imageUrl: p.image_url || defaultProd?.imageUrl || '',
+            instructive: instructive,
+          };
+        });
+
+        console.log('✅ Productos cargados con instructivos:', payload.products.length);
       } else {
+        // No hay productos en Supabase, usar todos los defaults (primera vez)
+        console.log('📦 No hay productos en Supabase, usando defaults...');
         payload.products = DEFAULT_PRODUCTS;
+
+        // Guardar todos los defaults en Supabase
+        for (const dp of DEFAULT_PRODUCTS) {
+          await supabase.from('products').upsert({
+            id: dp.id,
+            name: dp.name,
+            icon: dp.icon,
+            plans: dp.plans,
+            color: dp.color,
+            image_url: dp.imageUrl,
+            instructive: dp.instructive,
+          });
+        }
+        console.log('✅ Productos por defecto guardados en Supabase');
       }
 
       if (providers && providers.length > 0) {
@@ -345,18 +401,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
         payload.instructives = DEFAULT_INSTRUCTIVES;
         console.log('📝 No hay instructivos en Supabase, guardando defaults...');
 
-        // Guardar instructivos por defecto en Supabase
-        for (const instructive of DEFAULT_INSTRUCTIVES) {
-          await supabase.from('instructives').upsert({
-            id: instructive.id,
-            title: instructive.title,
-            content: instructive.content,
-            image_url: instructive.imageUrl || '',
-            created_at: instructive.createdAt,
-            updated_at: instructive.updatedAt,
-          });
+        // Guardar instructivos por defecto en Supabase usando insert
+        const now = new Date().toISOString();
+        const instructivesToInsert = DEFAULT_INSTRUCTIVES.map(i => ({
+          id: i.id,
+          title: i.title,
+          content: i.content,
+          image_url: i.imageUrl || '',
+          created_at: i.createdAt || now,
+          updated_at: i.updatedAt || now,
+        }));
+
+        const { error: insertError } = await supabase
+          .from('instructives')
+          .insert(instructivesToInsert);
+
+        if (insertError) {
+          console.error('❌ Error insertando instructivos:', insertError);
+          // Intentar con upsert como respaldo
+          for (const instructive of DEFAULT_INSTRUCTIVES) {
+            const { error: upsertError } = await supabase
+              .from('instructives')
+              .upsert({
+                id: instructive.id,
+                title: instructive.title,
+                content: instructive.content,
+                image_url: instructive.imageUrl || '',
+                created_at: instructive.createdAt || now,
+                updated_at: instructive.updatedAt || now,
+              });
+            if (upsertError) {
+              console.error('❌ Error en upsert:', instructive.title, upsertError);
+            }
+          }
+        } else {
+          console.log('✅ Instructivos defaults insertados en Supabase:', instructivesToInsert.length);
         }
-        console.log('✅ Instructivos defaults guardados en Supabase');
       }
 
       dispatch({ type: 'SET_STATE', payload });
@@ -430,6 +510,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     console.log('🔔 Configurando suscripciones en tiempo real para TODOS los datos...');
 
+    const channels: RealtimeChannel[] = [];
+
+    // Función para manejar errores de suscripción
+    const handleChannelError = (channelName: string, error: any) => {
+      console.error(`❌ Error en canal ${channelName}:`, error);
+      setRealtimeStatus(prev => ({ ...prev, [channelName]: false }));
+    };
+
+    // Función para manejar conexión exitosa
+    const handleChannelSubscribe = (channelName: string, status: string) => {
+      console.log(`📡 Estado del canal ${channelName}:`, status);
+      if (status === 'SUBSCRIBED') {
+        setRealtimeStatus(prev => ({ ...prev, [channelName]: true }));
+      } else if (status === 'CHANNEL_ERROR') {
+        setRealtimeStatus(prev => ({ ...prev, [channelName]: false }));
+      }
+    };
+
     // Suscripción para productos
     const productsChannel = supabase
       .channel('products-changes')
@@ -443,6 +541,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         (payload) => {
           console.log('📦 Cambio en productos:', payload);
           if (payload.eventType === 'INSERT') {
+            // Buscar instructivo en defaults
+            const defaultProd = DEFAULT_PRODUCTS.find(
+              dp => dp.name.toLowerCase() === payload.new.name?.toLowerCase() || dp.id === payload.new.id
+            );
             const newProduct = {
               id: payload.new.id,
               name: payload.new.name,
@@ -450,9 +552,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
               plans: payload.new.plans || [],
               color: payload.new.color || '#6366f1',
               imageUrl: payload.new.image_url || '',
+              instructive: payload.new.instructive || defaultProd?.instructive || '',
             };
             dispatch({ type: 'ADD_PRODUCT', payload: newProduct });
           } else if (payload.eventType === 'UPDATE') {
+            // Buscar instructivo en defaults
+            const defaultProd = DEFAULT_PRODUCTS.find(
+              dp => dp.name.toLowerCase() === payload.new.name?.toLowerCase() || dp.id === payload.new.id
+            );
             const updatedProduct = {
               id: payload.new.id,
               name: payload.new.name,
@@ -460,6 +567,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               plans: payload.new.plans || [],
               color: payload.new.color || '#6366f1',
               imageUrl: payload.new.image_url || '',
+              instructive: payload.new.instructive || defaultProd?.instructive || '',
             };
             dispatch({ type: 'UPDATE_PRODUCT', payload: updatedProduct });
           } else if (payload.eventType === 'DELETE') {
@@ -467,7 +575,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => handleChannelSubscribe('products', status));
+
+    productsChannel.on('system', {}, () => {});
+    channels.push(productsChannel);
 
     // Suscripción para instructivos
     const instructivesChannel = supabase
@@ -506,7 +617,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => handleChannelSubscribe('instructives', status));
+
+    channels.push(instructivesChannel);
 
     // Suscripción para proveedores
     const providersChannel = supabase
@@ -541,7 +654,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => handleChannelSubscribe('providers', status));
+
+    channels.push(providersChannel);
 
     // Suscripción para clientes
     const clientsChannel = supabase
@@ -580,7 +695,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => handleChannelSubscribe('clients', status));
+
+    channels.push(clientsChannel);
 
     // Suscripción para configuración (settings)
     const settingsChannel = supabase
@@ -608,16 +725,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => handleChannelSubscribe('settings', status));
 
+    channels.push(settingsChannel);
+
+    // Cleanup
     return () => {
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(instructivesChannel);
-      supabase.removeChannel(providersChannel);
-      supabase.removeChannel(clientsChannel);
-      supabase.removeChannel(settingsChannel);
+      console.log('🧹 Limpiando canales de Realtime...');
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
   }, [isOnline]);
+
+  // Mecanismo de respaldo: polling cada 30 segundos si Realtime no funciona
+  useEffect(() => {
+    if (!isOnline) return;
+
+    // Verificar si Realtime está funcionando
+    const allRealtimeWorking = Object.values(realtimeStatus).every(status => status === true);
+
+    if (!allRealtimeWorking && Object.keys(realtimeStatus).length > 0) {
+      console.log('⚠️ Realtime no está funcionando para algunas tablas. Usando polling como respaldo...');
+    }
+
+    // Polling de respaldo cada 30 segundos
+    const pollingInterval = setInterval(async () => {
+      console.log('🔄 Polling de respaldo: verificando cambios...');
+      await refreshData();
+    }, 30000);
+
+    return () => {
+      clearInterval(pollingInterval);
+    };
+  }, [isOnline, realtimeStatus]);
 
   // Función para refrescar datos
   const refreshData = async () => {
@@ -828,6 +969,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         plans: newProduct.plans || null,
         color: newProduct.color || null,
         image_url: newProduct.imageUrl || null,
+        instructive: newProduct.instructive || null, // Guardar instructivo
       });
     } catch (err) {
       console.error('Error guardando producto:', err);
@@ -837,16 +979,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = async (product: Product) => {
     try {
-      await supabase.from('products').upsert({
+      // Primero intentamos con instructive
+      const { error } = await supabase.from('products').upsert({
         id: product.id,
         name: product.name,
         icon: product.icon || null,
         plans: product.plans || null,
         color: product.color || null,
         image_url: product.imageUrl || null,
+        instructive: product.instructive || null,
       });
+
+      if (error) {
+        console.error('❌ Error actualizando producto con instructive:', error);
+        // Intentar sin el campo instructive
+        const { error: fallbackError } = await supabase.from('products').upsert({
+          id: product.id,
+          name: product.name,
+          icon: product.icon || null,
+          plans: product.plans || null,
+          color: product.color || null,
+          image_url: product.imageUrl || null,
+        });
+        if (fallbackError) {
+          console.error('❌ Error fallback actualizando producto:', fallbackError);
+        } else {
+          console.log('✅ Producto actualizado (sin instructivo):', product.name);
+        }
+      } else {
+        console.log('✅ Producto actualizado con instructivo:', product.name);
+      }
     } catch (err) {
-      console.error('Error actualizando producto:', err);
+      console.error('❌ Error actualizando producto:', err);
     }
     dispatch({ type: 'UPDATE_PRODUCT', payload: product });
   };

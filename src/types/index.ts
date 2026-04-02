@@ -58,6 +58,7 @@ export interface Product {
   plans: string[];
   color: string;
   imageUrl?: string;
+  instructive?: string; // Plantilla de instructivo para este producto
 }
 
 export interface Provider {
@@ -179,41 +180,16 @@ export interface ImportRow {
   _valid?: boolean;
 }
 
-// Productos predefinidos con logos
+// Productos predefinidos con logos e instructivos
 export const DEFAULT_PRODUCTS: Product[] = [
-  { id: '1', name: 'Netflix', icon: 'tv', plans: ['Completo 4K', '2 Pantallas', '5 Perfiles'], color: '#E50914', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png' },
-  { id: '2', name: 'PrimeVideo', icon: 'play', plans: ['Completo', '2 Pantallas'], color: '#00A8E1', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/3840px-Amazon_Prime_Video_logo.svg.png' },
-  { id: '3', name: 'Spotify Premium', icon: 'music', plans: ['Individual', 'Duo', 'Familiar (6)'], color: '#1DB954', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/71/Spotify.png' },
-  { id: '4', name: 'Deezer Premium', icon: 'headphones', plans: ['Free', 'Premium', 'HiFi'], color: '#FEAA2D', imageUrl: 'https://download.logo.wine/logo/Deezer/Deezer-Logo.wine.png' },
-  { id: '5', name: 'MaxPlayer', icon: 'film', plans: ['Básico', 'Premium'], color: '#7B2CBF', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0f/MX_Player_Logo.png' },
-  { id: '6', name: 'Disney+', icon: 'castle', plans: ['Estándar', 'Premium'], color: '#113CCF', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png' },
-  { id: '7', name: 'Crunchyroll', icon: 'gamepad-2', plans: ['Free', 'Fan', 'Mega Fan'], color: '#F47521', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png' },
-  { id: '8', name: 'HBO Max', icon: 'tv-2', plans: ['Estándar', 'Con TNT Sports'], color: '#B535F6', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png' },
-  { id: '9', name: 'TNT Sports Premium', icon: 'trophy', plans: ['Mensual', 'Anual'], color: '#E30613', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png' },
-  { id: '10', name: 'YouTube Premium', icon: 'youtube', plans: ['Individual', 'Familia'], color: '#FF0000', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/YouTube_Premium_logo.svg/1280px-YouTube_Premium_logo.svg.png' },
-  { id: '11', name: 'ChatGPT Plus', icon: 'bot', plans: ['Mensual', 'Anual'], color: '#10A37F', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png' },
-  { id: '12', name: 'Gemini Pro', icon: 'gem', plans: ['Free', 'Pro'], color: '#4285F4', imageUrl: 'https://logos-world.net/wp-content/uploads/2025/02/Google-Gemini-Logo.png' },
-  { id: '13', name: 'Paramount+', icon: 'play-circle', plans: ['Essential', 'Premium', '2 Pantallas'], color: '#0064FF', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png' },
-];
-
-// Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
-export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
-
-export const DEFAULT_SETTINGS: Settings = {
-  alarmDays: [7, 3, 1],
-  currency: 'USD',
-  currencySymbol: '$',
-  businessName: 'Rocky Cuentas',
-  logoUrl: undefined,
-};
-
-// Instructivos predeterminados
-export const DEFAULT_INSTRUCTIVES: Instructive[] = [
   {
-    id: 'netflix',
-    title: 'Netflix Garantía y Uso',
+    id: '1',
+    name: 'Netflix',
+    icon: 'tv',
+    plans: ['Completo 4K', '2 Pantallas', '5 Perfiles'],
+    color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    content: `✅ GARANTÍA Y USO DE NETFLIX 🎬🔐
+    instructive: `✅ GARANTÍA Y USO DE NETFLIX 🎬🔐
 
 ¡Gracias por tu compra! 🙌 A continuación, te explicamos todo lo que necesitas saber sobre el uso y garantía de tu cuenta:
 
@@ -264,14 +240,197 @@ Estamos siempre disponibles para ayudarte 💙
 
 🔒 ¡Gracias por confiar en nosotros!
 — Equipo Cuentas Rocky`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   },
   {
-    id: 'chatgpt',
-    title: 'ChatGPT Plus',
+    id: '2',
+    name: 'PrimeVideo',
+    icon: 'play',
+    plans: ['Completo', '2 Pantallas'],
+    color: '#00A8E1',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/3840px-Amazon_Prime_Video_logo.svg.png',
+  },
+  {
+    id: '3',
+    name: 'Spotify Premium',
+    icon: 'music',
+    plans: ['Individual', 'Duo', 'Familiar (6)'],
+    color: '#1DB954',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/71/Spotify.png',
+  },
+  {
+    id: '4',
+    name: 'Deezer Premium',
+    icon: 'headphones',
+    plans: ['Free', 'Premium', 'HiFi'],
+    color: '#FEAA2D',
+    imageUrl: 'https://download.logo.wine/logo/Deezer/Deezer-Logo.wine.png',
+  },
+  {
+    id: '5',
+    name: 'MaxPlayer',
+    icon: 'film',
+    plans: ['Básico', 'Premium'],
+    color: '#7B2CBF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0f/MX_Player_Logo.png',
+    instructive: `📺 INSTRUCTIVO DE USO – MAX PLAYER 🎬
+
+¡Hola! 😃 Te dejamos los pasos para ingresar correctamente y disfrutar tu servicio de televisión con Max Player 👇
+
+1️⃣ Ingreso a la cuenta:
+
+👉 Abre la aplicación Max Player.
+
+👉 Ingresa tu usuario y contraseña exactamente tal como fueron entregados, respetando mayúsculas, minúsculas y números.
+
+2️⃣ Configuración inicial:
+
+🌎 Al ingresar por primera vez, te pedirá elegir el idioma → selecciona Español.
+
+👤 Luego te pedirá crear un perfil → puedes poner el nombre que desees.
+
+⚠️ Importante: Cada dispositivo debe tener su propio perfil. No se puede usar el mismo perfil en otro dispositivo.
+
+3️⃣ Navegación dentro de la app:
+
+📂 Una vez dentro del perfil, verás una franja amarilla al costado izquierdo, ese es el menú principal.
+
+Ahí encontrarás las secciones:
+
+📺 Canales de TV
+🎞️ Películas
+🍿 Series
+
+4️⃣ Cómo cambiar de categoría:
+
+🎮 Al entrar en el menú de Canales, mantén presionado el botón OK o Enter en tu control remoto por algunos segundos, hasta que aparezca el menú circular.
+
+🔘 En ese menú verás las categorías disponibles.
+
+Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el canal que desees disfrutar.
+
+✨ El mismo procedimiento sirve para navegar en Películas y Series.
+
+5️⃣ Soporte:
+
+💬 Si tienes cualquier duda o problema, envíanos un mensaje. ¡Con gusto te ayudaremos!`,
+  },
+  {
+    id: '6',
+    name: 'Disney+',
+    icon: 'castle',
+    plans: ['Estándar', 'Premium'],
+    color: '#113CCF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png',
+  },
+  {
+    id: '7',
+    name: 'Crunchyroll',
+    icon: 'gamepad-2',
+    plans: ['Free', 'Fan', 'Mega Fan'],
+    color: '#F47521',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png',
+  },
+  {
+    id: '8',
+    name: 'HBO Max',
+    icon: 'tv-2',
+    plans: ['Estándar', 'Con TNT Sports'],
+    color: '#B535F6',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
+  },
+  {
+    id: '9',
+    name: 'TNT Sports Premium',
+    icon: 'trophy',
+    plans: ['Mensual', 'Anual'],
+    color: '#E30613',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png',
+  },
+  {
+    id: '10',
+    name: 'YouTube Premium',
+    icon: 'youtube',
+    plans: ['Individual', 'Familia'],
+    color: '#FF0000',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/YouTube_Premium_logo.svg/1280px-YouTube_Premium_logo.svg.png',
+  },
+  {
+    id: '11',
+    name: 'ChatGPT Plus',
+    icon: 'bot',
+    plans: ['Mensual', 'Anual'],
+    color: '#10A37F',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png',
-    content: `📘 Instructivo para Activar ChatGPT (Cuenta de Equipo)
+  },
+  {
+    id: '12',
+    name: 'Gemini Pro',
+    icon: 'gem',
+    plans: ['Free', 'Pro'],
+    color: '#4285F4',
+    imageUrl: 'https://logos-world.net/wp-content/uploads/2025/02/Google-Gemini-Logo.png',
+  },
+  {
+    id: '13',
+    name: 'Paramount+',
+    icon: 'play-circle',
+    plans: ['Essential', 'Premium', '2 Pantallas'],
+    color: '#0064FF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png',
+  },
+  {
+    id: '14',
+    name: 'Netflix Con Pines',
+    icon: 'tv',
+    plans: ['5 Perfiles con PIN'],
+    color: '#E50914',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
+    instructive: `🔹📺✨ CERRAR SESIÓN EN NETFLIX CON PINES
+
+✅ A continuación, te compartimos un video explicativo súper útil para aprender cómo cerrar sesión en Netflix, incluso cuando todos los perfiles cuentan con PIN de seguridad 🔐🙌:
+
+🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
+
+🚀 ¡Una guía práctica que te ayudará a gestionar tu cuenta de forma rápida y segura!`,
+  },
+  {
+    id: '15',
+    name: 'Disney Enlazar TV',
+    icon: 'castle',
+    plans: ['Enlazar TV'],
+    color: '#113CCF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png',
+    instructive: `🔹📺✨ ENLAZAR TV A DISNEY+
+
+✅ A continuación, te compartimos un video explicativo súper útil para aprender cómo vincular tu TV a tu cuenta de Disney+ de forma rápida y sencilla 📱:
+
+🔗 https://www.youtube.com/watch?v=87Ilv5vjBl8
+
+🚀 ¡Sigue el paso a paso y disfruta tu contenido favorito sin complicaciones!`,
+  },
+  {
+    id: '16',
+    name: 'PrimeVideo Enlazar TV',
+    icon: 'play',
+    plans: ['Enlazar TV'],
+    color: '#00A8E1',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/3840px-Amazon_Prime_Video_logo.svg.png',
+    instructive: `🔹📺✨ ENLAZAR TV A PRIME VIDEO
+
+✅ A continuación, te compartimos un video explicativo súper útil para aprender cómo vincular tu TV a tu cuenta de Prime Video de forma rápida y sencilla 📱:
+
+🔗 https://www.youtube.com/watch?v=f-0cZHZ0KIk
+
+🚀 ¡Sigue el paso a paso y comienza a disfrutar tus series y películas favoritas sin complicaciones!`,
+  },
+  {
+    id: '17',
+    name: 'ChatGPT Cuenta Equipo',
+    icon: 'bot',
+    plans: ['Cuenta de Equipo'],
+    color: '#10A37F',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/960px-ChatGPT_logo.svg.png',
+    instructive: `📘 INSTRUCTIVO PARA ACTIVAR CHATGPT (CUENTA DE EQUIPO)
 
 1️⃣ Inicie sesión en ChatGPT
 
@@ -294,7 +453,6 @@ Después de aceptar la invitación, será redirigido automáticamente a ChatGPT.
 El sistema le pedirá elegir con qué cuenta desea trabajar:
 
 Cuenta personal
-
 Cuenta del equipo de trabajo
 
 ➡️ Seleccione la cuenta del equipo de trabajo.
@@ -310,58 +468,22 @@ Si adquiere un plan por más de 3 meses, las cuentas pueden cambiar mes a mes.
 Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para evitar pérdida de información.
 
 ✔️ ¡Listo! Su cuenta ya estará configurada y lista para usar.`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'gemini',
-    title: 'Gemini Pro',
-    imageUrl: 'https://logos-world.net/wp-content/uploads/2025/02/Google-Gemini-Logo.png',
-    content: `💎 INSTRUCTIVO GEMINI PRO
-
-1. Ingresa a: gemini.google.com
-2. Inicia sesión con la cuenta proporcionada
-3. Usa el correo electrónico indicado
-4. ¡Accede a Gemini Advanced!
-
-✨ CARACTERÍSTICAS:
-- Acceso a Gemini Ultra 1.0
-- IA más avanzada de Google
-- Integración con Google apps
-- 2TB de almacenamiento en Google One
-- Gemini en WhatsApp
-
-⚠️ IMPORTANTE:
-- No cambies los datos de la cuenta
-- No recuperes la cuenta desde otro dispositivo
-- Si tienes problemas, contacta a tu proveedor`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'maxplayer',
-    title: 'MaxPlayer',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0f/MX_Player_Logo.png',
-    content: `🎬 INSTRUCTIVO MAXPLAYER
-
-1. Descarga MaxPlayer o ingresa a la app
-2. Inicia sesión con tu cuenta
-3. Usa el correo proporcionado
-4. Usa la contraseña proporcionada
-5. ¡Disfruta de películas y series!
-
-✨ CARACTERÍSTICAS:
-- Contenido variado de películas
-- Series populares
-- Descarga para ver offline
-
-⚠️ IMPORTANTE:
-- No cambies los datos de la cuenta
-- Si tienes problemas, contacta a tu proveedor`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   },
 ];
+
+// Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
+export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
+
+export const DEFAULT_SETTINGS: Settings = {
+  alarmDays: [7, 3, 1],
+  currency: 'USD',
+  currencySymbol: '$',
+  businessName: 'Rocky Cuentas',
+  logoUrl: undefined,
+};
+
+// Instructivos predeterminados - VACÍO, se agregan desde la UI
+export const DEFAULT_INSTRUCTIVES: Instructive[] = [];
 
 // Helper para calcular estado de la cuenta
 export const getAccountStatus = (expiryDate: string, alarmDays: number[]): AccountStatus => {

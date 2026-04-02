@@ -19,6 +19,11 @@ import {
   Sun,
   Moon,
   Zap,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -33,12 +38,30 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  const { state } = useApp();
+  const { state, isOnline, refreshData } = useApp();
   const { currentUser, logout, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [agregarExpanded, setAgregarExpanded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleSync = async () => {
+    if (isSyncing || !isOnline) return;
+    setIsSyncing(true);
+    setSyncStatus('idle');
+    try {
+      await refreshData();
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const expiringCount = state.accounts.filter(
     (acc) => {
@@ -329,6 +352,66 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       {/* User Menu */}
       <div className="p-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+        {/* Sync Button */}
+        {!collapsed && (
+          <button
+            onClick={handleSync}
+            disabled={isSyncing || !isOnline}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-2"
+            style={{
+              backgroundColor: syncStatus === 'success'
+                ? 'rgba(34, 197, 94, 0.2)'
+                : syncStatus === 'error'
+                ? 'rgba(239, 68, 68, 0.2)'
+                : isOnline
+                ? 'var(--accent-primary)'
+                : 'var(--bg-elevated)',
+              opacity: isSyncing || !isOnline ? 0.6 : 1,
+            }}
+          >
+            {isSyncing ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span className="text-sm text-white">Sincronizando...</span>
+              </>
+            ) : syncStatus === 'success' ? (
+              <>
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-sm text-green-400">¡Sincronizado!</span>
+              </>
+            ) : syncStatus === 'error' ? (
+              <>
+                <AlertCircle className="w-4 h-4 text-red-400" />
+                <span className="text-sm text-red-400">Error</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className={`w-4 h-4 ${!isOnline ? 'text-gray-400' : 'text-white'}`} />
+                <span className={`text-sm ${!isOnline ? 'text-gray-400' : 'text-white'}`}>
+                  Sincronizar
+                </span>
+                {!isOnline && <span className="text-xs text-gray-500 ml-1">(Offline)</span>}
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Collapsed Sync Button */}
+        {collapsed && (
+          <button
+            onClick={handleSync}
+            disabled={!isOnline}
+            className="w-full flex items-center justify-center p-2 rounded-lg mb-2 transition-colors"
+            style={{
+              backgroundColor: isOnline ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+              opacity: !isOnline ? 0.6 : 1,
+            }}
+            title={isOnline ? 'Sincronizar datos' : 'Sin conexión'}
+          >
+            <RefreshCw className={`w-4 h-4 ${!isOnline ? 'text-gray-400' : 'text-white'}`} />
+          </button>
+        )}
+
         {collapsed ? (
           <button
             onClick={handleLogout}

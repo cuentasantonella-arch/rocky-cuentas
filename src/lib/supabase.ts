@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 // Configuración de Supabase - Rocky Cuentas
 const supabaseUrl = 'https://lxfkigylpvughjlskocw.supabase.co';
@@ -9,7 +9,32 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: false,
     autoRefreshToken: false,
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });
+
+// Función para habilitar Realtime en una tabla
+// NOTA: La habilitación de Realtime se hace desde el Dashboard de Supabase
+// Database > Tables > Seleccionar tabla > Replication > Enable Replication
+export async function enableRealtimeForTable(tableName: string): Promise<boolean> {
+  try {
+    // Intentar habilitar mediante RPC (puede que no exista en todos los proyectos)
+    const { error } = await supabase.rpc('enable_realtime_for_table', { table_name: tableName });
+    if (error) {
+      // Si falla, asumimos que ya está habilitado o se hará desde el Dashboard
+      console.log(`ℹ️ Realtime para ${tableName}: configuración manual requerida en Dashboard`);
+      return false;
+    }
+    console.log(`✅ Realtime habilitado para ${tableName}`);
+    return true;
+  } catch (e) {
+    console.log(`ℹ️ Realtime para ${tableName}: se configurará desde el Dashboard`);
+    return false;
+  }
+}
 
 // Verificar conexión con Supabase
 export async function checkSupabaseConnection(): Promise<boolean> {
@@ -23,6 +48,28 @@ export async function checkSupabaseConnection(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error al verificar conexión:', error);
+    return false;
+  }
+}
+
+// Función para verificar si el Realtime está funcionando
+export async function checkRealtimeStatus(): Promise<boolean> {
+  try {
+    const channel = supabase.channel('test-realtime');
+    const status = channel.subscribe((status) => {
+      console.log('Realtime status:', status);
+      return status === 'SUBSCRIBED';
+    });
+
+    // Timeout de 3 segundos
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        supabase.removeChannel(channel);
+        resolve(false);
+      }, 3000);
+    });
+  } catch (error) {
+    console.error('Error verificando Realtime:', error);
     return false;
   }
 }
