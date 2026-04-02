@@ -142,6 +142,9 @@ export function Instructivos() {
     if (nameLower.includes('maxplayer') || nameLower.includes('max player')) {
       return '/images/maxplayer-logo.png';
     }
+    if (nameLower.includes('paramount')) {
+      return '/images/paramount-logo.png';
+    }
     return '';
   };
 

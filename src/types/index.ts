@@ -376,7 +376,7 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     icon: 'play-circle',
     plans: ['Essential', 'Premium', '2 Pantallas'],
     color: '#0064FF',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png',
+    imageUrl: '/images/paramount-logo.png',
   },
   {
     id: '14',
@@ -490,7 +490,7 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     icon: 'play-circle',
     plans: ['Enlazar TV'],
     color: '#0064FF',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png',
+    imageUrl: '/images/paramount-logo.png',
     instructive: `🔹📺✨ ENLAZAR TV A PARAMOUNT+
 
 ✅ A continuación, te compartimos una guía práctica para aprender cómo vincular tu TV a tu cuenta de Paramount+ de forma rápida y sencilla 🔗📱:
