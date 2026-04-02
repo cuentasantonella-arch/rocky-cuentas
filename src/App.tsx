@@ -12,7 +12,7 @@ import { ThemeProvider } from './context/ThemeContext';
 type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
   useEffect(() => {
@@ -25,6 +25,18 @@ function App() {
       window.removeEventListener('navigate', handleNavigate as EventListener);
     };
   }, []);
+
+  // Mostrar pantalla de carga mientras se restaura la sesión
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p style={{ color: 'var(--text-secondary)' }}>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Si no está autenticado, mostrar login
   if (!isAuthenticated) {

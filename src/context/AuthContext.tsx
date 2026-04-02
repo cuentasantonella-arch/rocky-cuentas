@@ -160,6 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Login exitoso');
       setCurrentUser(user);
 
+      // Guardar en localStorage para persistencia de sesión
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+
       // Sincronizar en segundo plano con Supabase
       syncUserToSupabase(user);
 
