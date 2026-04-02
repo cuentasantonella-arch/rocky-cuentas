@@ -484,6 +484,21 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
 
 🚀 ¡Sigue el paso a paso y disfruta de todo tu contenido favorito sin complicaciones!`,
   },
+  {
+    id: '19',
+    name: 'Paramount+ Enlazar TV',
+    icon: 'play-circle',
+    plans: ['Enlazar TV'],
+    color: '#0064FF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Paramount%2B_logo.svg/1024px-Paramount%2B_logo.svg.png',
+    instructive: `🔹📺✨ ENLAZAR TV A PARAMOUNT+
+
+✅ A continuación, te compartimos una guía práctica para aprender cómo vincular tu TV a tu cuenta de Paramount+ de forma rápida y sencilla 🔗📱:
+
+🔗 https://rocky-cuentas.vercel.app
+
+🚀 ¡Sigue el paso a paso y comienza a disfrutar tu contenido favorito sin complicaciones!`,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
