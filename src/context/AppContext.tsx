@@ -341,10 +341,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }));
         console.log('✅ Instructivos cargados desde Supabase:', payload.instructives.length);
       } else {
-        // Si no hay instructivos en Supabase, usar los defaults
+        // Si no hay instructivos en Supabase, usar los defaults y GUARDARLOS
         payload.instructives = DEFAULT_INSTRUCTIVES;
-        console.log('📝 No hay instructivos en Supabase, usando defaults:', DEFAULT_INSTRUCTIVES.length);
-        // Guardar instructivos por defecto en Supabase para que estén disponibles
+        console.log('📝 No hay instructivos en Supabase, guardando defaults...');
+
+        // Guardar instructivos por defecto en Supabase
         for (const instructive of DEFAULT_INSTRUCTIVES) {
           await supabase.from('instructives').upsert({
             id: instructive.id,
@@ -353,8 +354,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             image_url: instructive.imageUrl || '',
             created_at: instructive.createdAt,
             updated_at: instructive.updatedAt,
-          }, { onConflict: 'id' });
+          });
         }
+        console.log('✅ Instructivos defaults guardados en Supabase');
       }
 
       dispatch({ type: 'SET_STATE', payload });
@@ -422,11 +424,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadFromSupabase();
   }, []);
 
-  // Suscripciones en tiempo real para productos e instructivos
+  // Suscripciones en tiempo real para TODOS los datos
   useEffect(() => {
     if (!isOnline) return;
 
-    console.log('🔔 Configurando suscripciones en tiempo real...');
+    console.log('🔔 Configurando suscripciones en tiempo real para TODOS los datos...');
 
     // Suscripción para productos
     const productsChannel = supabase
@@ -506,9 +508,114 @@ export function AppProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Suscripción para proveedores
+    const providersChannel = supabase
+      .channel('providers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'providers',
+        },
+        (payload) => {
+          console.log('🏪 Cambio en proveedores:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newProvider = {
+              id: payload.new.id,
+              name: payload.new.name,
+              productType: payload.new.product_type || '',
+              notes: payload.new.notes || '',
+            };
+            dispatch({ type: 'ADD_PROVIDER', payload: newProvider });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedProvider = {
+              id: payload.new.id,
+              name: payload.new.name,
+              productType: payload.new.product_type || '',
+              notes: payload.new.notes || '',
+            };
+            dispatch({ type: 'UPDATE_PROVIDER', payload: updatedProvider });
+          } else if (payload.eventType === 'DELETE') {
+            dispatch({ type: 'DELETE_PROVIDER', payload: payload.old.id });
+          }
+        }
+      )
+      .subscribe();
+
+    // Suscripción para clientes
+    const clientsChannel = supabase
+      .channel('clients-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clients',
+        },
+        (payload) => {
+          console.log('👤 Cambio en clientes:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newClient = {
+              id: payload.new.id,
+              name: payload.new.name,
+              contact: payload.new.contact || '',
+              email: payload.new.email || '',
+              notes: payload.new.notes || '',
+              createdAt: payload.new.created_at,
+            };
+            dispatch({ type: 'ADD_CLIENT', payload: newClient });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedClient = {
+              id: payload.new.id,
+              name: payload.new.name,
+              contact: payload.new.contact || '',
+              email: payload.new.email || '',
+              notes: payload.new.notes || '',
+              createdAt: payload.new.created_at,
+            };
+            dispatch({ type: 'UPDATE_CLIENT', payload: updatedClient });
+          } else if (payload.eventType === 'DELETE') {
+            dispatch({ type: 'DELETE_CLIENT', payload: payload.old.id });
+          }
+        }
+      )
+      .subscribe();
+
+    // Suscripción para configuración (settings)
+    const settingsChannel = supabase
+      .channel('settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'settings',
+        },
+        (payload) => {
+          console.log('⚙️ Cambio en configuración:', payload);
+          if (payload.eventType === 'UPDATE') {
+            dispatch({
+              type: 'UPDATE_SETTINGS',
+              payload: {
+                businessName: payload.new.business_name || 'Rocky Cuentas',
+                logoUrl: payload.new.logo_url || '',
+                alarmDays: payload.new.alarm_days || [7, 3, 1],
+                currency: payload.new.currency || 'USD',
+                currencySymbol: payload.new.currency_symbol || '$',
+              }
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(productsChannel);
       supabase.removeChannel(instructivesChannel);
+      supabase.removeChannel(providersChannel);
+      supabase.removeChannel(clientsChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, [isOnline]);
 
