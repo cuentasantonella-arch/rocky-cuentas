@@ -10,6 +10,8 @@ import {
   Upload,
   X,
   FileText,
+  Download,
+  FileUp,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Instructive } from '../types';
@@ -29,6 +31,9 @@ export function Instructivos() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleCopy = async (instructive: Instructive) => {
     try {
@@ -130,10 +135,85 @@ export function Instructivos() {
     return '';
   };
 
+  // Exportar instructivos a archivo JSON
+  const handleExport = () => {
+    const dataToExport = state.instructives.map(i => ({
+      title: i.title,
+      content: i.content,
+      imageUrl: i.imageUrl || '',
+    }));
+
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `instructivos-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    logActivity('instructive_created', `Exportados ${state.instructives.length} instructivos`);
+  };
+
+  // Manejar archivo de importación
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const importedData = JSON.parse(content);
+
+        if (!Array.isArray(importedData)) {
+          setImportMessage({ type: 'error', text: 'El archivo no tiene el formato correcto' });
+          return;
+        }
+
+        let added = 0;
+        for (const item of importedData) {
+          if (item.title && item.content) {
+            // Verificar si ya existe uno con el mismo título
+            const exists = state.instructives.some(
+              i => i.title.toLowerCase() === item.title.toLowerCase()
+            );
+            if (!exists) {
+              addInstructive({
+                title: item.title,
+                content: item.content,
+                imageUrl: item.imageUrl || undefined,
+              });
+              added++;
+            }
+          }
+        }
+
+        if (added > 0) {
+          setImportMessage({ type: 'success', text: `Se importaron ${added} instructivos exitosamente` });
+          logActivity('instructive_created', `Importados ${added} instructivos`);
+          setTimeout(() => {
+            setShowImportModal(false);
+            setImportMessage(null);
+          }, 2000);
+        } else {
+          setImportMessage({ type: 'error', text: 'Todos los instructivos ya existen o el archivo está vacío' });
+        }
+      } catch (err) {
+        setImportMessage({ type: 'error', text: 'Error al leer el archivo JSON' });
+      }
+    };
+    reader.readAsText(file);
+
+    // Limpiar el input
+    if (e.target) e.target.value = '';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-3">
             <BookOpen className="w-7 h-7 text-indigo-400" />
@@ -143,13 +223,31 @@ export function Instructivos() {
             Gestiona los instructivos para entregar a tus clientes
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Nuevo Instructivo
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors flex items-center gap-2"
+            title="Importar instructivos"
+          >
+            <FileUp className="w-4 h-4" />
+            Importar
+          </button>
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2"
+            title="Exportar instructivos"
+          >
+            <Download className="w-4 h-4" />
+            Exportar
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -540,6 +638,65 @@ export function Instructivos() {
               >
                 Crear Instructivo
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a2e] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="bg-green-600/20 px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <FileUp className="w-5 h-5" />
+                Importar Instructivos
+              </h2>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportMessage(null);
+                }}
+                className="p-1 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              {importMessage && (
+                <div className={`mb-4 p-3 rounded-lg ${
+                  importMessage.type === 'success'
+                    ? 'bg-green-600/20 border border-green-500 text-green-400'
+                    : 'bg-red-600/20 border border-red-500 text-red-400'
+                }`}>
+                  {importMessage.text}
+                </div>
+              )}
+
+              <p className="text-gray-300 mb-4">
+                Selecciona un archivo JSON previamente exportado con tus instructivos.
+              </p>
+
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportFile}
+                className="hidden"
+              />
+
+              <button
+                onClick={() => importFileRef.current?.click()}
+                className="w-full py-4 border-2 border-dashed border-gray-600 rounded-xl hover:border-green-500 hover:bg-green-600/10 transition-all flex flex-col items-center justify-center gap-2"
+              >
+                <FileUp className="w-8 h-8 text-gray-400" />
+                <span className="text-gray-300">Seleccionar archivo JSON</span>
+                <span className="text-xs text-gray-500">instructivos-backup-*.json</span>
+              </button>
+
+              <p className="text-xs text-gray-500 mt-4 text-center">
+                Los instructivos que ya existen serán omitidos durante la importación.
+              </p>
             </div>
           </div>
         </div>
