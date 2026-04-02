@@ -482,42 +482,71 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
   return (
     <div className="bg-[#16213e] rounded-xl overflow-hidden">
-      {/* Pestañas por producto */}
-      <div className="p-4 border-b border-gray-700/50">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Pestañas por producto - Estilo iconos */}
+      <div className="p-3 border-b border-gray-700/50">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Botón Todas */}
           <button
             onClick={() => handleTabChange('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`group relative w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
               selectedProductTab === 'all'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                : 'bg-[#0f0f1a] text-gray-400 hover:text-white hover:bg-gray-800'
+                ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30'
+                : 'bg-[#0f0f1a] hover:bg-gray-800'
             }`}
+            title={`Todas (${accounts.length})`}
           >
-            Todas ({accounts.length})
+            <div className="text-center">
+              <span className={`text-lg font-bold ${selectedProductTab === 'all' ? 'text-white' : 'text-gray-400'}`}>📋</span>
+              {/* Badge con contador */}
+              <div className={`absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                selectedProductTab === 'all'
+                  ? 'bg-white text-indigo-600'
+                  : 'bg-indigo-600 text-white'
+              }`}>
+                {accounts.length}
+              </div>
+            </div>
           </button>
+
+          {/* Iconos de productos */}
           {productsWithAccounts.map((product) => {
             const count = accounts.filter(acc => acc.productType === product.name).length;
+            const isSelected = selectedProductTab === product.name;
             return (
               <button
                 key={product.id}
                 onClick={() => handleTabChange(product.name)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                  selectedProductTab === product.name
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                    : 'bg-[#0f0f1a] text-gray-400 hover:text-white hover:bg-gray-800'
+                className={`group relative w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                  isSelected
+                    ? 'bg-indigo-600 shadow-lg shadow-indigo-500/30'
+                    : 'bg-[#0f0f1a] hover:bg-gray-800'
                 }`}
+                title={product.name}
               >
-                {product.imageUrl && (
+                {product.imageUrl ? (
                   <img
                     src={product.imageUrl}
                     alt={product.name}
-                    className="w-5 h-5 object-contain rounded"
+                    className={`w-8 h-8 object-contain rounded-lg ${
+                      isSelected ? 'brightness-0 invert' : ''
+                    }`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
+                ) : (
+                  <span className={`text-lg ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                    {product.name.charAt(0)}
+                  </span>
                 )}
-                {product.name} ({count})
+                {/* Badge con contador */}
+                <div className={`absolute -top-1 -right-1 min-w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  isSelected
+                    ? 'bg-white text-indigo-600'
+                    : 'bg-indigo-600 text-white'
+                }`}>
+                  {count}
+                </div>
               </button>
             );
           })}
