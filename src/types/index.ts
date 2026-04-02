@@ -211,28 +211,78 @@ export const DEFAULT_SETTINGS: Settings = {
 export const DEFAULT_INSTRUCTIVES: Instructive[] = [
   {
     id: 'netflix',
-    title: 'Netflix',
+    title: 'Netflix Garantía y Uso',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    content: `📺 INSTRUCTIVO NETFLIX
+    content: `✅ GARANTÍA Y USO DE NETFLIX 🎬🔐
 
-1. Descarga la app Netflix o ingresa a: netflix.com
-2. Haz clic en "Iniciar sesión"
-3. Ingresa el correo electrónico proporcionado
-4. Ingresa la contraseña proporcionada
-5. ¡Listo! Disfruta de tus series y películas
+¡Gracias por tu compra! 🙌 A continuación, te explicamos todo lo que necesitas saber sobre el uso y garantía de tu cuenta:
 
-📋 PLAN: [PLAN]
-👤 PERFILES: Tienes [N] perfiles disponibles
+─────────────────────────────────────────
 
-✨ CARACTERÍSTICAS:
-- Calidad hasta 4K Ultra HD
-- Descarga para ver offline
-- Perfiles ilimitados según tu plan
+👁️ OJO CON LA NUEVA FORMA PARA INGRESAR CON CONTRASEÑA DESDE PC Y CELULAR:
+
+👉 Instrucciones aquí:
+🔗 https://postimg.cc/NyqCkQdp
+
+─────────────────────────────────────────
+
+📌 USO CORRECTO DE LA CUENTA
+
+La cuenta debe utilizarse solo en la cantidad de pantallas o dispositivos incluidos en el plan que compraste.
+
+➡️ Ejemplo: Si adquiriste un plan de 1 pantalla y lo usás en tu TV, no podés instalarlo en otro dispositivo, aunque no estés usando el primero.
 
 ⚠️ IMPORTANTE:
-- No cambies el correo ni la contraseña
-- No recuperes la cuenta desde otro dispositivo
-- Si necesitas ayuda, contacta a tu proveedor`,
+
+Cambiar de dispositivo sin autorización puede provocar el bloqueo de la cuenta.
+
+En caso de mal uso, la garantía se anula automáticamente y no hay derecho a reclamo.
+
+👉 Si necesitas usar Netflix en más dispositivos, te recomendamos contratar un plan que se ajuste a tus necesidades.
+
+─────────────────────────────────────────
+
+📣 MENSAJE QUE PUEDE APARECER A LOS 20 DÍAS
+
+A partir del día 20 de uso, puede aparecer el siguiente mensaje:
+
+🛑 "Tu cuenta no es parte de Grupo Hogar"
+
+🔄 ¡No te preocupes! Es completamente normal.
+
+Dependiendo del dispositivo que estés usando, seguí las siguientes instrucciones:
+
+📺 EN SMART TV:
+👉 Instrucciones aquí:
+🔗 https://postimg.cc/jW5XjCc5
+
+📱 EN DISPOSITIVOS MÓVILES:
+👉 Instrucciones aquí:
+🔗 https://postimg.cc/Jyrs2mNW
+
+Presioná "Ver temporalmente", luego enviá un mail solicitando el código.
+
+📩 Una vez que completes los pasos, escríbenos para enviarte el código de hogar.
+
+─────────────────────────────────────────
+
+⏳ SI CONTRATASTE UN PLAN MAYOR A 1 MES:
+
+La primera cuenta tiene una duración de 30 días.
+
+Al finalizar, nos avisas y te enviaremos una nueva cuenta para seguir usando el servicio.
+
+🔁 Este proceso se repite mes a mes hasta completar el tiempo total contratado.
+
+✅ Solo los planes de 4 pantallas permiten uso continuo sin cambio de cuenta.
+
+─────────────────────────────────────────
+
+💬 ¿Dudas o consultas?
+Estamos siempre disponibles para ayudarte 💙
+
+🔒 ¡Gracias por confiar en nosotros!
+— Equipo Cuentas Rocky`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
