@@ -478,13 +478,16 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       return;
     }
 
+    // Mostrar confirmación
     const confirmMsg = `¿Confirmar cambio de fecha de vencimiento?\n\nCuenta: ${account.email}\nFecha anterior: ${formatDate(account.expiryDate)}\nNueva fecha: ${formatDate(tempExpiryDate)}`;
 
     if (confirm(confirmMsg)) {
-      updateAccount({
+      // Actualizar la cuenta con la nueva fecha
+      const updatedAccount = {
         ...account,
         expiryDate: tempExpiryDate,
-      });
+      };
+      updateAccount(updatedAccount);
       logActivity(
         'account_updated',
         `Fecha de vencimiento actualizada para ${account.email}`,
@@ -940,8 +943,8 @@ _Rocky Cuentas - Gracias por su compra_`;
                         </>
                       ) : editingExpiryDate === account.id ? (
                         // Modo edición con date input directo
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
                             <input
                               type="date"
                               value={tempExpiryDate}
@@ -950,48 +953,37 @@ _Rocky Cuentas - Gracias por su compra_`;
                               autoFocus
                             />
                           </div>
-                          <button
-                            onClick={() => saveExpiryDate(account)}
-                            className="px-3 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-lg"
-                            title="Confirmar cambio"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={cancelEditExpiryDate}
-                            className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white text-xs font-medium flex items-center gap-1 transition-colors"
-                            title="Cancelar"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => saveExpiryDate(account)}
+                              className="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                              title="Confirmar cambio"
+                            >
+                              <Check className="w-3 h-3" />
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={cancelEditExpiryDate}
+                              className="flex-1 px-3 py-1.5 bg-gray-600 hover:bg-gray-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-1 transition-colors"
+                              title="Cancelar"
+                            >
+                              <X className="w-3 h-3" />
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         // Modo visualización con icono de calendario para editar
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-white text-sm font-medium">{formatDate(account.expiryDate)}</p>
-                            <label className="cursor-pointer">
-                              <input
-                                type="date"
-                                value={account.expiryDate}
-                                onChange={(e) => {
-                                  const newDate = e.target.value;
-                                  const confirmMsg = `¿Confirmar cambio de fecha de vencimiento?\n\nCuenta: ${account.email}\nFecha anterior: ${formatDate(account.expiryDate)}\nNueva fecha: ${formatDate(newDate)}`;
-                                  if (confirm(confirmMsg)) {
-                                    updateAccount({ ...account, expiryDate: newDate });
-                                    logActivity(
-                                      'account_updated',
-                                      `Fecha de vencimiento actualizada para ${account.email}`,
-                                      `De: ${formatDate(account.expiryDate)} → A: ${formatDate(newDate)}`,
-                                      undefined,
-                                      account.id
-                                    );
-                                  }
-                                }}
-                                className="absolute opacity-0 w-0 h-0"
-                              />
-                              <Calendar className="w-5 h-5 text-indigo-400 hover:text-indigo-300 transition-colors" title="Click para modificar la fecha" />
-                            </label>
+                            <button
+                              onClick={() => startEditExpiryDate(account.id, account.expiryDate)}
+                              className="p-1 hover:bg-indigo-500/20 rounded transition-colors"
+                              title="Click para modificar la fecha"
+                            >
+                              <Calendar className="w-5 h-5 text-indigo-400 hover:text-indigo-300 transition-colors" />
+                            </button>
                           </div>
                           <p
                             className={`text-xs font-medium ${
