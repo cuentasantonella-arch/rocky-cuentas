@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { Send, Users, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Send, Users, MessageCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
 
 interface Message {
   id: string;
@@ -11,146 +10,134 @@ interface Message {
   created_at: string;
 }
 
+const STORAGE_KEY = 'rocky_chat_messages';
+const CHANNEL_NAME = 'rocky_chat_broadcast';
+
 export function Chat() {
   const { currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [chatEnabled, setChatEnabled] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [participantCount, setParticipantCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
 
-  // Cargar mensajes
+  // Cargar mensajes desde localStorage
+  const loadMessages = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setMessages(parsed);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Guardar mensajes en localStorage
+  const saveMessages = useCallback((msgs: Message[]) => {
+    try {
+      // Mantener solo los últimos 500 mensajes
+      const trimmed = msgs.slice(-500);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+      return trimmed;
+    } catch (error) {
+      console.error('Error saving messages:', error);
+      return msgs;
+    }
+  }, []);
+
+  // Inicializar BroadCastChannel y listeners
   useEffect(() => {
+    // Cargar mensajes iniciales
     loadMessages();
 
-    // Suscribirse a nuevos mensajes
-    const channel = supabase
-      .channel('chat_group')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages'
-        },
-        (payload) => {
-          const newMsg = payload.new as Message;
-          // Solo mostrar mensajes grupales
-          if (newMsg.sender_id) {
-            setMessages(prev => [...prev, newMsg]);
-          }
+    // Crear canal de broadcast para comunicación entre pestañas
+    if (typeof BroadcastChannel !== 'undefined') {
+      broadcastChannelRef.current = new BroadcastChannel(CHANNEL_NAME);
+      broadcastChannelRef.current.onmessage = (event) => {
+        if (event.data.type === 'NEW_MESSAGE') {
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === event.data.message.id);
+            if (!exists) {
+              const updated = [...prev, event.data.message];
+              saveMessages(updated);
+              return updated;
+            }
+            return prev;
+          });
+        } else if (event.data.type === 'CLEAR_ALL') {
+          setMessages([]);
+          localStorage.removeItem(STORAGE_KEY);
         }
-      )
-      .subscribe();
+      };
+    }
+
+    // Listener para cambios de localStorage en otras pestañas
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const newMessages = JSON.parse(e.newValue);
+          setMessages(newMessages);
+        } catch (error) {
+          console.error('Error parsing storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      supabase.removeChannel(channel);
+      window.removeEventListener('storage', handleStorageChange);
+      broadcastChannelRef.current?.close();
     };
-  }, []);
+  }, [loadMessages, saveMessages]);
 
   // Desplazarse al último mensaje
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Verificar si la tabla existe
-  const ensureChatTable = async (): Promise<boolean> => {
-    try {
-      const { error: selectError } = await supabase
-        .from('chat_messages')
-        .select('id')
-        .limit(1);
-
-      if (selectError) {
-        console.error('Cannot access chat_messages table:', selectError);
-        setChatEnabled(false);
-        setErrorMessage('La tabla de chat no está configurada. Contacta al administrador.');
-        return false;
-      }
-      return true;
-    } catch (e) {
-      console.error('Error checking chat table:', e);
-      setChatEnabled(false);
-      return false;
-    }
-  };
-
-  const loadMessages = async () => {
-    try {
-      setLoading(true);
-      setErrorMessage('');
-
-      const tableExists = await ensureChatTable();
-      if (!tableExists) {
-        setMessages([]);
-        setLoading(false);
-        return;
-      }
-
-      // Cargar mensajes grupales (los que no tienen recipient_id o los de tipo 'group')
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .or('type.eq.group,recipient_id.is.null')
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error loading messages:', error);
-        setChatEnabled(false);
-        setErrorMessage('Error al cargar mensajes: ' + error.message);
-        setMessages([]);
-        setLoading(false);
-        return;
-      }
-
-      setChatEnabled(true);
-      setMessages(data || []);
-
-      // Contar participantes únicos
-      const uniqueSenders = new Set(data?.map(m => m.sender_id));
-      setParticipantCount(uniqueSenders.size || 0);
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendMessage = async () => {
+  // Enviar mensaje
+  const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !currentUser) return;
 
-    if (!chatEnabled) {
-      setErrorMessage('El chat no está disponible. La tabla de mensajes no está configurada.');
-      return;
+    const message: Message = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      sender_id: currentUser.id,
+      sender_name: currentUser.name,
+      content: newMessage.trim(),
+      created_at: new Date().toISOString(),
+    };
+
+    // Actualizar estado y guardar
+    setMessages(prev => {
+      const updated = [...prev, message];
+      saveMessages(updated);
+      return updated;
+    });
+
+    // Notificar a otras pestañas
+    broadcastChannelRef.current?.postMessage({
+      type: 'NEW_MESSAGE',
+      message,
+    });
+
+    setNewMessage('');
+  }, [newMessage, currentUser, saveMessages]);
+
+  // Limpiar todos los mensajes (solo admin)
+  const clearAllMessages = useCallback(() => {
+    if (!currentUser || currentUser.role !== 'admin') return;
+
+    if (confirm('¿Estás seguro de que quieres borrar TODOS los mensajes del chat?')) {
+      setMessages([]);
+      localStorage.removeItem(STORAGE_KEY);
+      broadcastChannelRef.current?.postMessage({ type: 'CLEAR_ALL' });
     }
-
-    try {
-      const messageData = {
-        sender_id: currentUser.id,
-        sender_name: currentUser.name,
-        content: newMessage.trim(),
-        type: 'group',
-        created_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert([messageData]);
-
-      if (error) {
-        console.error('Error sending message:', error);
-        setErrorMessage('Error al enviar: ' + error.message);
-        return;
-      }
-      setNewMessage('');
-      setErrorMessage('');
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      setErrorMessage('Error al enviar el mensaje: ' + (error?.message || 'Error desconocido'));
-    }
-  };
+  }, [currentUser]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -189,6 +176,9 @@ export function Chat() {
     return groups;
   }, {});
 
+  // Contar participantes únicos
+  const participantCount = new Set(messages.map(m => m.sender_id)).size;
+
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-card)' }}>
       {/* Header */}
@@ -197,41 +187,37 @@ export function Chat() {
           <MessageCircle className="w-6 h-6 text-indigo-500" />
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Chat Grupal</h1>
         </div>
-        <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-          <Users className="w-4 h-4" />
-          <span>{participantCount} participantes</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+            <Users className="w-4 h-4" />
+            <span>{participantCount} participantes</span>
+          </div>
+          {currentUser?.role === 'admin' && messages.length > 0 && (
+            <button
+              onClick={clearAllMessages}
+              className="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
+              title="Borrar todos los mensajes"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Error Message */}
-        {errorMessage && (
-          <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 mb-4">
-            <p className="text-red-400 text-sm">{errorMessage}</p>
-          </div>
-        )}
-
-        {/* Chat disabled message */}
-        {!chatEnabled && !loading && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <MessageCircle className="w-16 h-16 mb-4 opacity-50" />
-            <p className="text-lg font-medium">Chat no disponible</p>
-            <p className="text-sm text-center max-w-xs mt-2">
-              La tabla de chat no está configurada. Contacta al administrador para activarla.
-            </p>
-          </div>
-        )}
-
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
           </div>
-        ) : !chatEnabled ? null : messages.length === 0 ? (
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <MessageCircle className="w-16 h-16 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sin mensajes</p>
             <p className="text-sm">¡Sé el primero en enviar un mensaje!</p>
+            <p className="text-xs mt-4 opacity-70">
+              Los mensajes se guardan localmente y se sincronizan entre pestañas
+            </p>
           </div>
         ) : (
           Object.entries(groupedMessages).map(([date, dateMessages]) => (
@@ -250,7 +236,7 @@ export function Chat() {
                 const isOwnMessage = msg.sender_id === currentUser?.id;
                 const showAvatar = index === 0 || dateMessages[index - 1]?.sender_id !== msg.sender_id;
                 const showName = index === 0 || dateMessages[index - 1]?.sender_id !== msg.sender_id ||
-                  new Date(msg.created_at).getTime() - new Date(dateMessages[index - 1].created_at).getTime() > 300000; // 5 min
+                  new Date(msg.created_at).getTime() - new Date(dateMessages[index - 1].created_at).getTime() > 300000;
 
                 return (
                   <div
@@ -309,34 +295,28 @@ export function Chat() {
 
       {/* Input */}
       <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-        {!chatEnabled ? (
-          <div className="text-center text-red-400 py-2">
-            Chat no disponible - Tabla de mensajes no configurada
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Escribe un mensaje al grupo..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1 px-4 py-3 rounded-xl text-sm"
-              style={{
-                backgroundColor: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-              }}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!newMessage.trim()}
-              className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors flex items-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Escribe un mensaje al grupo..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="flex-1 px-4 py-3 rounded-xl text-sm"
+            style={{
+              backgroundColor: 'var(--bg-elevated)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+            }}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={!newMessage.trim()}
+            className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors flex items-center gap-2"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
