@@ -243,6 +243,15 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         ? (primaryClientName ? 'sold' : 'available')
         : 'available');
 
+    // Preparar los datos de la cuenta
+    // Calcular la fecha de vencimiento: usar manual si está configurada, si no calcular automáticamente
+    const finalManualExpiry = tempManualExpiryDate || manualExpiryDate;
+    const calculatedExpiry = isDisponible
+      ? ''
+      : (finalManualExpiry
+        ? finalManualExpiry
+        : calculateExpiryDate(formData.saleDate, Number(formData.duration)));
+
     const accountData = {
       email: formData.email.trim(),
       // Para ChatGPT, guardar contraseña solo si se proporcionó
@@ -256,8 +265,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       clientContact: isDisponible ? undefined : (formData.clientContact.trim() || undefined),
       saleDate: isDisponible ? '' : formData.saleDate,
       duration: isDisponible ? 0 : Number(formData.duration),
-      // Usar fecha manual si está configurada, si no calcular automáticamente
-      expiryDate: isDisponible ? '' : (isManualExpiry ? manualExpiryDate : calculateExpiryDate(formData.saleDate, Number(formData.duration))),
+      expiryDate: calculatedExpiry,
       provider: formData.provider.trim(),
       providerRenewalDate: formData.providerRenewalDate,
       saleStatus,
@@ -275,6 +283,11 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       addAccount(accountData);
     }
 
+    // Limpiar estados de fecha manual
+    setTempManualExpiryDate('');
+    setManualExpiryDate('');
+    setIsManualExpiry(false);
+
     onClose();
   };
 
@@ -282,7 +295,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const calculatedExpiryDate = formData.saleDate && formData.duration
     ? calculateExpiryDate(formData.saleDate, Number(formData.duration))
     : '';
-  const expiryDatePreview = isManualExpiry ? manualExpiryDate : calculatedExpiryDate;
+  // Si estamos editando la fecha (tempManualExpiryDate tiene valor), mostrarla
+  const expiryDatePreview = tempManualExpiryDate || (isManualExpiry ? manualExpiryDate : calculatedExpiryDate);
 
   // Inicializar fecha manual si estamos editando una cuenta con fecha de vencimiento
   useEffect(() => {
