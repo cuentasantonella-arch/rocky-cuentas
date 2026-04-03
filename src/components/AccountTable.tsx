@@ -783,6 +783,9 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
               // Contar perfiles marcados como vendidos
               const profilesSold = account.profiles?.filter(p => p.sold === true).length || 0;
               const totalProfiles = account.profiles?.length || 0;
+              // Contar perfiles con cliente asignado (aunque no estén marcados como vendidos)
+              const profilesWithClient = account.profiles?.filter(p => p.clientName && p.clientName.trim() !== '').length || 0;
+              const hasPendingProfiles = hasProfiles && profilesWithClient < totalProfiles;
               const isFullySold = account.saleStatus === 'sold' || (hasProfiles && account.profiles!.every(p => p.sold === true));
               const isSelected = selectedAccounts.has(account.id);
 
@@ -791,7 +794,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                 <tr
                   className={`border-t border-gray-700/30 hover:bg-white/5 transition-colors ${
                     status === 'critical' ? 'bg-red-500/5' : status === 'expiring' ? 'bg-yellow-500/5' : ''
-                  } ${isFullySold ? 'bg-green-500/5' : ''} ${isSelected ? 'bg-indigo-500/10' : ''}`}
+                  } ${isFullySold ? 'bg-green-500/5' : ''} ${hasPendingProfiles ? 'bg-orange-500/5 border-l-4 border-l-orange-500' : ''} ${isSelected ? 'bg-indigo-500/10' : ''}`}
                 >
                   <td className="px-4 py-3">
                     <button
@@ -889,18 +892,25 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                       )}
                       {/* Indicador de venta y botón de perfiles */}
                       {hasProfiles && (
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                               isFullySold
                                 ? 'bg-green-500/20 text-green-400'
-                                : 'bg-orange-500/20 text-orange-400'
+                                : hasPendingProfiles
+                                ? 'bg-orange-500/30 text-orange-300 border border-orange-500/50'
+                                : 'bg-yellow-500/20 text-yellow-400'
                             }`}
                           >
                             {isFullySold ? (
                               <>
                                 <ShoppingCart className="w-3 h-3" />
                                 Vendida
+                              </>
+                            ) : hasPendingProfiles ? (
+                              <>
+                                <AlertTriangle className="w-3 h-3" />
+                                {totalProfiles - profilesWithClient} perfil{totalProfiles - profilesWithClient > 1 ? 'es' : ''} pendiente{totalProfiles - profilesWithClient > 1 ? 's' : ''} por vender
                               </>
                             ) : (
                               <>
