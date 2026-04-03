@@ -169,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('name', normalizedUsername)
           .single();
 
+        // Si NO hay error y SI hay datos, el usuario existe en Supabase
         if (!supabaseError && supabaseUser) {
           console.log('Usuario encontrado en Supabase:', supabaseUser);
 
@@ -201,12 +202,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           return { success: true };
+        } else if (supabaseError && supabaseError.code !== 'PGRST116') {
+          // Error real (no solo "no encontrado")
+          console.log('Error de Supabase:', supabaseError.message);
+          // Supabase tiene un error real, continuar a usuarios locales
+        } else {
+          console.log('Usuario no encontrado en Supabase (continuando a locales)');
         }
       } catch (e) {
-        console.log('No se encontró en Supabase o error:', e);
+        console.log('Excepción al buscar en Supabase:', e);
+        // Continuar a usuarios locales
       }
 
-      // 2. SEGUNDO: Verificar en usuarios locales (fallback para admin)
+      // 2. SEGUNDO: Verificar en usuarios locales (fallback para admin y usuarios locales)
       const localUser = users.find(u => u.name.toLowerCase() === normalizedUsername);
 
       if (!localUser) {
@@ -322,6 +330,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Creando usuario:', newUser);
 
       // 1. PRIMERO: Guardar en Supabase (fuente principal)
+      let savedToSupabase = false;
       try {
         const { error: supabaseError } = await supabase
           .from('clients')
@@ -337,12 +346,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (supabaseError) {
           console.error('Error guardando en Supabase:', supabaseError);
-          // No fallamos, guardamos localmente al menos
+          // Verificar si es error de RLS
+          if (supabaseError.code === '42501' || supabaseError.code === 'PGRST116') {
+            return { success: false, error: 'Error de permisos en Supabase. Verifica las políticas RLS de la tabla clients.' };
+          }
+          // No fallamos por ahora, guardamos localmente al menos
         } else {
           console.log('Usuario guardado en Supabase exitosamente');
+          savedToSupabase = true;
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error al conectar con Supabase:', e);
+        return { success: false, error: 'No se pudo conectar con Supabase: ' + (e?.message || 'Error desconocido') };
       }
 
       // 2. SEGUNDO: Guardar en localStorage
@@ -350,6 +365,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUsers(updatedUsers);
       saveUsersToStorage(updatedUsers);
 
+      console.log('Usuario creado:', newUser.name, '| Guardado en Supabase:', savedToSupabase);
       return { success: true };
     } catch (e) {
       console.error('Error adding user:', e);
