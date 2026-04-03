@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Users, MessageCircle, Trash2 } from 'lucide-react';
+import { Send, Users, MessageCircle, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface Message {
   id: string;
@@ -10,90 +11,104 @@ interface Message {
   created_at: string;
 }
 
-const STORAGE_KEY = 'rocky_chat_messages';
-const CHANNEL_NAME = 'rocky_chat_broadcast';
-
 export function Chat() {
   const { currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const channelRef = useRef<any>(null);
 
-  // Cargar mensajes desde localStorage
-  const loadMessages = useCallback(() => {
+  // Cargar mensajes desde Supabase
+  const loadMessages = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setMessages(parsed);
+      setLoading(true);
+      setErrorMessage('');
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(500);
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        setErrorMessage('No se puede conectar al chat. Ejecuta el SQL de migración en Supabase.');
+        setMessages([]);
+        setConnected(false);
+      } else {
+        setMessages(data || []);
+        setConnected(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading messages:', error);
+      setErrorMessage('Error de conexión. Verifica tu internet.');
+      setMessages([]);
+      setConnected(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Guardar mensajes en localStorage
-  const saveMessages = useCallback((msgs: Message[]) => {
-    try {
-      // Mantener solo los últimos 500 mensajes
-      const trimmed = msgs.slice(-500);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-      return trimmed;
-    } catch (error) {
-      console.error('Error saving messages:', error);
-      return msgs;
-    }
-  }, []);
-
-  // Inicializar BroadCastChannel y listeners
+  // Suscribirse a mensajes en tiempo real
   useEffect(() => {
-    // Cargar mensajes iniciales
-    loadMessages();
+    let isMounted = true;
 
-    // Crear canal de broadcast para comunicación entre pestañas
-    if (typeof BroadcastChannel !== 'undefined') {
-      broadcastChannelRef.current = new BroadcastChannel(CHANNEL_NAME);
-      broadcastChannelRef.current.onmessage = (event) => {
-        if (event.data.type === 'NEW_MESSAGE') {
-          setMessages(prev => {
-            const exists = prev.some(m => m.id === event.data.message.id);
-            if (!exists) {
-              const updated = [...prev, event.data.message];
-              saveMessages(updated);
-              return updated;
+    const subscribeToMessages = async () => {
+      try {
+        // Primero cargar mensajes
+        await loadMessages();
+        if (!isMounted) return;
+
+        // Configurar canal de Realtime
+        channelRef.current = supabase
+          .channel('chat-realtime-group')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'chat_messages'
+            },
+            (payload: any) => {
+              if (isMounted) {
+                const newMsg = payload.new as Message;
+                setMessages(prev => {
+                  // Evitar duplicados
+                  if (prev.some(m => m.id === newMsg.id)) return prev;
+                  return [...prev, newMsg];
+                });
+              }
             }
-            return prev;
+          )
+          .subscribe((status: string) => {
+            if (isMounted) {
+              setConnected(status === 'SUBSCRIBED');
+              if (status === 'CHANNEL_ERROR') {
+                setErrorMessage('Error de conexión en tiempo real');
+              }
+            }
           });
-        } else if (event.data.type === 'CLEAR_ALL') {
-          setMessages([]);
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      };
-    }
-
-    // Listener para cambios de localStorage en otras pestañas
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const newMessages = JSON.parse(e.newValue);
-          setMessages(newMessages);
-        } catch (error) {
-          console.error('Error parsing storage event:', error);
+      } catch (error) {
+        console.error('Error subscribing:', error);
+        if (isMounted) {
+          setErrorMessage('No se puede conectar al chat en tiempo real');
+          setConnected(false);
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    subscribeToMessages();
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      broadcastChannelRef.current?.close();
+      isMounted = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
-  }, [loadMessages, saveMessages]);
+  }, [loadMessages]);
 
   // Desplazarse al último mensaje
   useEffect(() => {
@@ -101,41 +116,53 @@ export function Chat() {
   }, [messages]);
 
   // Enviar mensaje
-  const sendMessage = useCallback(() => {
+  const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !currentUser) return;
 
-    const message: Message = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      sender_id: currentUser.id,
-      sender_name: currentUser.name,
-      content: newMessage.trim(),
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const messageData = {
+        sender_id: currentUser.id,
+        sender_name: currentUser.name,
+        content: newMessage.trim(),
+        created_at: new Date().toISOString(),
+      };
 
-    // Actualizar estado y guardar
-    setMessages(prev => {
-      const updated = [...prev, message];
-      saveMessages(updated);
-      return updated;
-    });
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([messageData]);
 
-    // Notificar a otras pestañas
-    broadcastChannelRef.current?.postMessage({
-      type: 'NEW_MESSAGE',
-      message,
-    });
-
-    setNewMessage('');
-  }, [newMessage, currentUser, saveMessages]);
+      if (error) {
+        console.error('Error sending message:', error);
+        setErrorMessage('Error al enviar mensaje: ' + error.message);
+      } else {
+        setNewMessage('');
+        setErrorMessage('');
+      }
+    } catch (error: any) {
+      console.error('Error sending:', error);
+      setErrorMessage('Error al enviar: ' + (error?.message || 'Error desconocido'));
+    }
+  }, [newMessage, currentUser]);
 
   // Limpiar todos los mensajes (solo admin)
-  const clearAllMessages = useCallback(() => {
+  const clearAllMessages = useCallback(async () => {
     if (!currentUser || currentUser.role !== 'admin') return;
 
     if (confirm('¿Estás seguro de que quieres borrar TODOS los mensajes del chat?')) {
-      setMessages([]);
-      localStorage.removeItem(STORAGE_KEY);
-      broadcastChannelRef.current?.postMessage({ type: 'CLEAR_ALL' });
+      try {
+        const { error } = await supabase
+          .from('chat_messages')
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000'); // Borra todos
+
+        if (!error) {
+          setMessages([]);
+        } else {
+          alert('Error al borrar mensajes: ' + error.message);
+        }
+      } catch (error: any) {
+        alert('Error: ' + (error?.message || 'No se pudieron borrar los mensajes'));
+      }
     }
   }, [currentUser]);
 
@@ -186,6 +213,19 @@ export function Chat() {
         <div className="flex items-center gap-3">
           <MessageCircle className="w-6 h-6 text-indigo-500" />
           <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Chat Grupal</h1>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${connected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            {connected ? (
+              <>
+                <Wifi className="w-3 h-3" />
+                <span>En línea</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3 h-3" />
+                <span>Sin conexión</span>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -206,6 +246,13 @@ export function Chat() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Error Message */}
+        {errorMessage && (
+          <div className="p-3 rounded-lg bg-amber-500/20 border border-amber-500/30 mb-4">
+            <p className="text-amber-400 text-sm">{errorMessage}</p>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
@@ -215,8 +262,8 @@ export function Chat() {
             <MessageCircle className="w-16 h-16 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sin mensajes</p>
             <p className="text-sm">¡Sé el primero en enviar un mensaje!</p>
-            <p className="text-xs mt-4 opacity-70">
-              Los mensajes se guardan localmente y se sincronizan entre pestañas
+            <p className="text-xs mt-4 opacity-70 text-center max-w-xs">
+              Los mensajes se sincronizan en tiempo real entre todos los dispositivos
             </p>
           </div>
         ) : (
@@ -298,11 +345,12 @@ export function Chat() {
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Escribe un mensaje al grupo..."
+            placeholder={connected ? "Escribe un mensaje al grupo..." : "Conectando..."}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 px-4 py-3 rounded-xl text-sm"
+            disabled={!connected}
+            className="flex-1 px-4 py-3 rounded-xl text-sm disabled:opacity-50"
             style={{
               backgroundColor: 'var(--bg-elevated)',
               color: 'var(--text-primary)',
@@ -311,7 +359,7 @@ export function Chat() {
           />
           <button
             onClick={sendMessage}
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || !connected}
             className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
