@@ -844,11 +844,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateAccount = async (account: Account, reason?: string) => {
     const now = new Date().toISOString();
+
+    // IMPORTANTE: Preservar el expiryDate que viene de la cuenta directamente
+    // Solo recalcular si es una cuenta nueva sin expiryDate definido
+    // Si la cuenta ya tiene expiryDate (manual o calculado), mantenerlo
+    const expiryDateToSave = account.expiryDate !== undefined && account.expiryDate !== null && account.expiryDate !== ''
+      ? account.expiryDate
+      : (account.plan === 'Disponible' || !account.saleDate
+        ? ''
+        : calculateExpiryDate(account.saleDate, account.duration));
+
     const updatedAccount = {
       ...account,
-      expiryDate: account.plan === 'Disponible' || !account.saleDate
-        ? ''
-        : calculateExpiryDate(account.saleDate, account.duration),
+      expiryDate: expiryDateToSave,
       updatedAt: now,
     };
 
