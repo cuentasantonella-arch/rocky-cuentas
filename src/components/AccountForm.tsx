@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, User, Users, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, getProfilesCount } from '../types';
+import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount } from '../types';
 
 interface AccountFormProps {
   account?: Account;
@@ -44,6 +44,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
   // Verificar si el producto usa "Clientes" en vez de "Perfiles" (productos de 2 pantallas)
   const usesClients = TWO_SCREEN_PRODUCTS.includes(formData.productType);
+  // Verificar si es producto de 1 solo perfil (ej: Netflix Extra)
+  const usesSingleProfile = SINGLE_PROFILE_PRODUCTS.includes(formData.productType);
+  // Máximo de perfiles permitidos
+  const maxProfiles = usesSingleProfile ? 1 : 5;
 
   // Inicializar perfiles si es necesario
   const initializeProfiles = (count: number) => {
@@ -69,19 +73,22 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     if (!formData.plan || formData.plan === 'Disponible') return;
 
     const profilesFromPlan = getProfilesCount(formData.plan);
-    if (profilesFromPlan > 0 && profiles.length === 0) {
+    // Para Netflix Extra, crear 1 perfil por defecto
+    const targetProfiles = usesSingleProfile ? 1 : profilesFromPlan;
+
+    if (targetProfiles > 0 && profiles.length === 0) {
       // Detectar número en el plan y pre-llenar
       const initialProfiles: Profile[] = [];
-      for (let i = 1; i <= profilesFromPlan; i++) {
+      for (let i = 1; i <= targetProfiles; i++) {
         initialProfiles.push({ slot: i, clientName: '' });
       }
       setProfiles(initialProfiles);
     }
-  }, [formData.plan]);
+  }, [formData.plan, usesSingleProfile]);
 
   // Agregar un perfil
   const addProfile = () => {
-    if (profiles.length < 5) {
+    if (profiles.length < maxProfiles) {
       const newSlot = profiles.length + 1;
       setProfiles([...profiles, { slot: newSlot, clientName: '' }]);
     }
@@ -89,7 +96,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
   // Quitar el último perfil
   const removeProfile = () => {
-    if (profiles.length > 0) {
+    // Para productos de 1 solo perfil, no permitir eliminar
+    if (profiles.length > 0 && !usesSingleProfile) {
       setProfiles(profiles.slice(0, -1));
     }
   };
@@ -440,41 +448,59 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                 }}>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-lg font-bold" style={{ color: '#1e293b' }}>
-                      Perfiles/Clientes ({profilesCount}/5)
+                      Perfiles/Clientes ({profilesCount}/{maxProfiles})
+                      {usesSingleProfile && (
+                        <span className="ml-2 text-xs font-normal" style={{ color: '#6366f1' }}>
+                          (1 persona)
+                        </span>
+                      )}
                     </p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={removeProfile}
-                        className="w-12 h-12 rounded-full font-bold text-white text-xl flex items-center justify-center transition-transform hover:scale-110 shadow-lg"
-                        style={{
-                          backgroundColor: '#dc2626',
-                          opacity: profilesCount === 0 ? 0.4 : 1,
-                          cursor: profilesCount === 0 ? 'not-allowed' : 'pointer'
-                        }}
-                      >
-                        -
-                      </button>
-                      <span className="font-bold text-3xl min-w-[60px] text-center" style={{ color: '#1e293b' }}>
-                        {profilesCount}
+                    {!usesSingleProfile && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={removeProfile}
+                          className="w-12 h-12 rounded-full font-bold text-white text-xl flex items-center justify-center transition-transform hover:scale-110 shadow-lg"
+                          style={{
+                            backgroundColor: '#dc2626',
+                            opacity: profilesCount === 0 ? 0.4 : 1,
+                            cursor: profilesCount === 0 ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          -
+                        </button>
+                        <span className="font-bold text-3xl min-w-[60px] text-center" style={{ color: '#1e293b' }}>
+                          {profilesCount}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={addProfile}
+                          className="w-12 h-12 rounded-full font-bold text-white text-xl flex items-center justify-center transition-transform hover:scale-110 shadow-lg"
+                          style={{
+                            backgroundColor: '#16a34a',
+                            opacity: profilesCount >= maxProfiles ? 0.4 : 1,
+                            cursor: profilesCount >= maxProfiles ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                    {usesSingleProfile && (
+                      <span className="px-3 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: '#6366f1', color: '#ffffff' }}>
+                        Fijo
                       </span>
-                      <button
-                        type="button"
-                        onClick={addProfile}
-                        className="w-12 h-12 rounded-full font-bold text-white text-xl flex items-center justify-center transition-transform hover:scale-110 shadow-lg"
-                        style={{
-                          backgroundColor: '#16a34a',
-                          opacity: profilesCount >= 5 ? 0.4 : 1,
-                          cursor: profilesCount >= 5 ? 'not-allowed' : 'pointer'
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
+                    )}
                   </div>
-                  <p className="text-base font-medium" style={{ color: '#64748b' }}>
-                    Presiona <span className="font-bold" style={{color: '#16a34a'}}>+</span> para agregar perfiles o <span className="font-bold" style={{color: '#dc2626'}}>-</span> para quitar
-                  </p>
+                  {!usesSingleProfile ? (
+                    <p className="text-base font-medium" style={{ color: '#64748b' }}>
+                      Presiona <span className="font-bold" style={{color: '#16a34a'}}>+</span> para agregar perfiles o <span className="font-bold" style={{color: '#dc2626'}}>-</span> para quitar
+                    </p>
+                  ) : (
+                    <p className="text-base font-medium" style={{ color: '#64748b' }}>
+                      Netflix Extra permite solo 1 perfil para 1 persona
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
