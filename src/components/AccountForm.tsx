@@ -226,7 +226,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       newErrors.clientName = 'El nombre del cliente es requerido';
     }
 
-    if (!formData.saleDate) newErrors.saleDate = 'La fecha de venta es requerida';
+    // Si el plan es "Disponible", no requiere fecha de venta
+    if (formData.plan !== 'Disponible' && !formData.saleDate) newErrors.saleDate = 'La fecha de venta es requerida';
 
     // Si el plan es "Disponible", no requiere duración específica
     if (formData.plan !== 'Disponible') {
