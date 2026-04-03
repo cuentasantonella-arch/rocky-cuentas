@@ -51,6 +51,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [expandedProfiles, setExpandedProfiles] = useState<Record<string, boolean>>({});
   const [copiedProfile, setCopiedProfile] = useState<string | null>(null);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   // Estado para selección múltiple
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   // Estado para pestañas por producto
@@ -756,7 +757,24 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div>
-                        <p className="text-white font-medium text-sm">{account.email}</p>
+                        <div className="flex items-center gap-1">
+                          <p className="text-white font-medium text-sm">{account.email}</p>
+                          <button
+                            onClick={() => {
+                              copyToClipboard(account.email);
+                              setCopiedEmail(account.id);
+                              setTimeout(() => setCopiedEmail(null), 2000);
+                            }}
+                            className="p-1 hover:bg-white/10 rounded transition-colors"
+                            title="Copiar email"
+                          >
+                            {copiedEmail === account.id ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-gray-500 hover:text-white" />
+                            )}
+                          </button>
+                        </div>
                         <div className="flex items-center gap-2 mt-1">
                           <p className="text-xs text-gray-500">
                             {showPass ? account.password : '••••••••'}
