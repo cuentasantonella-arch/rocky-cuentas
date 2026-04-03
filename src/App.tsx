@@ -6,11 +6,10 @@ import { SettingsPanel } from './components/Settings';
 import { Login } from './components/Login';
 import { ActivityLog } from './components/ActivityLog';
 import { Instructivos } from './components/Instructivos';
-import { Chat } from './components/Chat';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'chat';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos';
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -66,8 +65,6 @@ function App() {
         return <ActivityLog />;
       case 'instructivos':
         return <Instructivos />;
-      case 'chat':
-        return <Chat />;
       default:
         return <Dashboard />;
     }
