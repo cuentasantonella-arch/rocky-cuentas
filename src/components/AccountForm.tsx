@@ -236,7 +236,6 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     }
 
     if (!formData.provider.trim()) newErrors.provider = 'El proveedor es requerido';
-    if (!formData.providerRenewalDate) newErrors.providerRenewalDate = 'La fecha de renovación es requerida';
 
     // Validar que si hay perfiles y NO es "Disponible", al menos uno esté asignado
     if (formData.plan !== 'Disponible' && profilesCount > 0) {
@@ -888,19 +887,16 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Fecha de Renovación Proveedor *
+                    Fecha de Renovación Proveedor
                   </label>
                   <input
                     type="date"
                     name="providerRenewalDate"
                     value={formatDateForInput(formData.providerRenewalDate)}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                      errors.providerRenewalDate ? 'border-red-500' : ''
-                    }`}
+                    className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                     style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
                   />
-                  {errors.providerRenewalDate && <p className="text-red-500 text-xs mt-1">{errors.providerRenewalDate}</p>}
                 </div>
               </div>
             </div>
