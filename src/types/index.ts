@@ -510,7 +510,7 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     icon: 'palette',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#7D2AE8',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Crunchyroll_Logo.png/1280px-Canva_Logo.png',
+    imageUrl: '/images/canva-pro-logo.jpeg',
   },
   {
     id: '21',
@@ -621,7 +621,7 @@ export const calculateExpiryDate = (saleDate: string, duration: number): string 
 
 // Helper para convertir meses a texto
 export const getDurationText = (months: number): string => {
-  if (months === 1) return '30 días';
+  if (months === 1) return '1 mes';
   return `${months} meses`;
 };
 

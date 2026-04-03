@@ -186,6 +186,7 @@ interface AppContextType {
   updateInstructive: (instructive: Instructive) => Promise<void>;
   deleteInstructive: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  recalculateAllExpiryDates: () => Promise<number>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -770,6 +771,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await loadFromSupabase();
   };
 
+  // Función para recalcular TODAS las fechas de vencimiento con el nuevo método (meses calendario)
+  const recalculateAllExpiryDates = async (): Promise<number> => {
+    let updatedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const account of state.accounts) {
+      // Solo recalcular cuentas que NO son "Disponible" y tienen fecha de venta y duración
+      if (account.plan !== 'Disponible' && account.saleDate && account.duration > 0) {
+        const newExpiryDate = calculateExpiryDate(account.saleDate, account.duration);
+
+        // Solo actualizar si la fecha es diferente
+        if (account.expiryDate !== newExpiryDate) {
+          const updatedAccount = {
+            ...account,
+            expiryDate: newExpiryDate,
+            updatedAt: now,
+          };
+
+          // Guardar en Supabase
+          try {
+            const { error } = await supabase
+              .from('accounts')
+              .upsert({
+                id: updatedAccount.id,
+                email: updatedAccount.email,
+                password: updatedAccount.password || null,
+                product_type: updatedAccount.productType,
+                plan: updatedAccount.plan,
+                client_name: updatedAccount.clientName || null,
+                client_contact: updatedAccount.clientContact || null,
+                provider: updatedAccount.provider || null,
+                provider_renewal_date: updatedAccount.providerRenewalDate || null,
+                sale_date: updatedAccount.saleDate || null,
+                duration: updatedAccount.duration || 1,
+                expiry_date: updatedAccount.expiryDate || null,
+                sale_status: updatedAccount.saleStatus || 'available',
+                profiles: JSON.stringify(updatedAccount.profiles || []),
+                notes: updatedAccount.notes || null,
+                created_at: updatedAccount.createdAt,
+                updated_at: updatedAccount.updatedAt,
+              });
+
+            if (!error) {
+              dispatch({ type: 'UPDATE_ACCOUNT', payload: updatedAccount });
+              updatedCount++;
+              console.log(`✅ Fecha actualizada: ${account.email} - ${account.expiryDate} → ${newExpiryDate}`);
+            }
+          } catch (err) {
+            console.error(`❌ Error actualizando cuenta ${account.email}:`, err);
+          }
+        }
+      }
+    }
+
+    console.log(`📊 Total de fechas actualizadas: ${updatedCount}`);
+    return updatedCount;
+  };
+
   // ========== FUNCIONES DE CUENTAS ==========
   const addAccount = async (accountData: Omit<Account, 'id' | 'expiryDate' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
@@ -1269,6 +1328,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateInstructive,
         deleteInstructive,
         refreshData,
+        recalculateAllExpiryDates,
       }}
     >
       {children}

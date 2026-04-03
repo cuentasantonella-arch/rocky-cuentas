@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
-import { Save, Bell, DollarSign, Building, Users, Plus, Edit2, Trash2, X, Crown, User, Image, Link, Upload, Trash, Download, Database, AlertTriangle } from 'lucide-react';
+import { Save, Bell, DollarSign, Building, Users, Plus, Edit2, Trash2, X, Crown, User, Image, Link, Upload, Trash, Download, Database, AlertTriangle, Calendar, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { User as UserType, UserRole } from '../types';
 
 export function SettingsPanel() {
-  const { state, updateSettings, dispatch } = useApp();
+  const { state, updateSettings, dispatch, recalculateAllExpiryDates } = useApp();
   const { users, addUser, updateUser, deleteUser, isAdmin, currentUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const restoreFileRef = useRef<HTMLInputElement>(null);
@@ -20,6 +20,8 @@ export function SettingsPanel() {
 
   const [saved, setSaved] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [recalculating, setRecalculating] = useState(false);
+  const [recalculateResult, setRecalculateResult] = useState<{ count: number } | null>(null);
 
   // Logo upload handler
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +121,38 @@ export function SettingsPanel() {
     // Limpiar el input
     if (restoreFileRef.current) {
       restoreFileRef.current.value = '';
+    }
+  };
+
+  // Función para recalcular todas las fechas de vencimiento
+  const handleRecalculateExpiryDates = async () => {
+    const confirmed = window.confirm(
+      '¿Estás seguro de recalcular TODAS las fechas de vencimiento?\n\n' +
+      'Esto corregirá las fechas de todas las cuentas al nuevo formato (mismo día cada mes).\n' +
+      'Por ejemplo: 4 de febrero + 1 año = 4 de febrero del próximo año.\n\n' +
+      'Las cuentas ya tendrán su fecha modificada según el nuevo cálculo.'
+    );
+
+    if (!confirmed) return;
+
+    setRecalculating(true);
+    setRecalculateResult(null);
+
+    try {
+      const count = await recalculateAllExpiryDates();
+      setRecalculateResult({ count });
+
+      // Mostrar resultado
+      if (count > 0) {
+        alert(`¡Éxito! Se actualizaron ${count} fechas de vencimiento.`);
+      } else {
+        alert('No se encontraron cuentas que necesiten corrección.');
+      }
+    } catch (error) {
+      console.error('Error al recalcular fechas:', error);
+      alert('Ocurrió un error al recalcular las fechas.');
+    } finally {
+      setRecalculating(false);
     }
   };
 
@@ -464,6 +498,70 @@ export function SettingsPanel() {
           )}
         </div>
       </form>
+
+      {/* Herramientas de Mantenimiento */}
+      <div className="mt-8 pt-8 border-t border-gray-700">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-orange-500/20 rounded-lg">
+            <Calendar className="w-5 h-5 text-orange-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Herramientas de Mantenimiento</h3>
+            <p className="text-sm text-gray-400">Utilidades para corregir y actualizar datos</p>
+          </div>
+        </div>
+
+        {/* Recalcular fechas de vencimiento */}
+        <div className="bg-[#16213e] rounded-xl p-6 border border-gray-700/50">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <RefreshCw className="w-4 h-4 text-orange-400" />
+                <h4 className="text-white font-medium">Recalcular Fechas de Vencimiento</h4>
+              </div>
+              <p className="text-sm text-gray-400 mb-3">
+                Corrige las fechas de vencimiento de TODAS las cuentas al nuevo formato.<br/>
+                <strong className="text-orange-300">Nuevo cálculo:</strong> Mantiene el mismo día del mes (ej: 4 de febrero + 1 año = 4 de febrero del próximo año).
+              </p>
+              <p className="text-xs text-gray-500">
+                Cuentas actuales: {state.accounts.filter(a => a.plan !== 'Disponible' && a.saleDate && a.duration > 0).length}
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <button
+                onClick={handleRecalculateExpiryDates}
+                disabled={recalculating}
+                className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-all ${
+                  recalculating
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg shadow-orange-500/20'
+                }`}
+              >
+                {recalculating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Recalculando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    Recalcular Todas las Fechas
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Resultado */}
+          {recalculateResult && (
+            <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+              <p className="text-green-400 text-sm">
+                ✓ Se actualizaron {recalculateResult.count} fechas de vencimiento correctamente.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Backup y Restauración */}
       <div className="mt-8 pt-8 border-t border-gray-700">
