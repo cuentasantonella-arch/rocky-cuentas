@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Users, Lock } from 'lucide-react';
+import { X, User, Users, Lock, Calendar, Check, X as XIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount } from '../types';
 
@@ -35,6 +35,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [customClientMode, setCustomClientMode] = useState(true);
+  // Estado para fecha de vencimiento manual (override)
+  const [manualExpiryDate, setManualExpiryDate] = useState<string>('');
+  const [isManualExpiry, setIsManualExpiry] = useState(false);
+  const [tempManualExpiryDate, setTempManualExpiryDate] = useState<string>('');
 
   const selectedProduct = state.products.find((p) => p.name === formData.productType);
   const plans = selectedProduct?.plans || [];
@@ -252,7 +256,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       clientContact: isDisponible ? undefined : (formData.clientContact.trim() || undefined),
       saleDate: isDisponible ? '' : formData.saleDate,
       duration: isDisponible ? 0 : Number(formData.duration),
-      expiryDate: isDisponible ? '' : calculateExpiryDate(formData.saleDate, Number(formData.duration)),
+      // Usar fecha manual si está configurada, si no calcular automáticamente
+      expiryDate: isDisponible ? '' : (isManualExpiry ? manualExpiryDate : calculateExpiryDate(formData.saleDate, Number(formData.duration))),
       provider: formData.provider.trim(),
       providerRenewalDate: formData.providerRenewalDate,
       saleStatus,
@@ -273,9 +278,25 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     onClose();
   };
 
-  const expiryDatePreview = formData.saleDate && formData.duration
+  // Calcular fecha de vencimiento - usar manual si existe, si no calcular
+  const calculatedExpiryDate = formData.saleDate && formData.duration
     ? calculateExpiryDate(formData.saleDate, Number(formData.duration))
     : '';
+  const expiryDatePreview = isManualExpiry ? manualExpiryDate : calculatedExpiryDate;
+
+  // Inicializar fecha manual si estamos editando una cuenta con fecha de vencimiento
+  useEffect(() => {
+    if (account?.expiryDate) {
+      // Verificar si la fecha actual difiere de la calculada
+      const calculated = formData.saleDate && formData.duration
+        ? calculateExpiryDate(formData.saleDate, Number(formData.duration))
+        : '';
+      if (account.expiryDate !== calculated && account.expiryDate) {
+        setManualExpiryDate(account.expiryDate);
+        setIsManualExpiry(true);
+      }
+    }
+  }, [account?.id]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
@@ -716,11 +737,73 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
                   <div>
                     <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                      Vence el
+                      Vence el {isManualExpiry && <span className="text-xs text-yellow-400">(Manual)</span>}
                     </label>
-                    <div className="px-4 py-2.5 border rounded-lg font-medium" style={{ backgroundColor: 'var(--bg-input)', color: 'var(--accent-primary)', borderColor: 'var(--border-color)' }}>
-                      {expiryDatePreview ? new Date(expiryDatePreview).toLocaleDateString('es-ES') : '-'}
-                    </div>
+                    {tempManualExpiryDate ? (
+                      // Modo edición
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="date"
+                            value={tempManualExpiryDate}
+                            onChange={(e) => setTempManualExpiryDate(e.target.value)}
+                            className="w-full px-4 py-2.5 border rounded-lg font-medium"
+                            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--accent-primary)', borderColor: '#6366f1' }}
+                            autoFocus
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (tempManualExpiryDate) {
+                              setManualExpiryDate(tempManualExpiryDate);
+                              setIsManualExpiry(true);
+                            }
+                            setTempManualExpiryDate('');
+                          }}
+                          className="px-3 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors flex items-center justify-center"
+                          title="Confirmar fecha manual"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTempManualExpiryDate('');
+                            setIsManualExpiry(false);
+                            setManualExpiryDate('');
+                          }}
+                          className="px-3 py-2.5 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors flex items-center justify-center"
+                          title="Cancelar - usar fecha automática"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      // Modo visualización
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-4 py-2.5 border rounded-lg font-medium" style={{ backgroundColor: 'var(--bg-input)', color: 'var(--accent-primary)', borderColor: isManualExpiry ? '#f59e0b' : 'var(--border-color)' }}>
+                          {expiryDatePreview ? new Date(expiryDatePreview).toLocaleDateString('es-ES') : '-'}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Iniciar con la fecha actual (calculada o manual)
+                            setTempManualExpiryDate(manualExpiryDate || calculatedExpiryDate || new Date().toISOString().split('T')[0]);
+                          }}
+                          className="px-3 py-2.5 border-2 border-indigo-500 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors flex items-center justify-center"
+                          title="Modificar fecha manualmente"
+                          style={{ borderColor: '#6366f1' }}
+                        >
+                          <Calendar className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+                    {isManualExpiry && (
+                      <p className="text-xs mt-1 text-amber-400">
+                        Fecha manual activada - La fecha no cambiará aunque modifiques la duración
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
