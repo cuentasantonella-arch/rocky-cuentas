@@ -53,6 +53,17 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   // Máximo de perfiles permitidos
   const maxProfiles = usesSingleProfile ? 1 : 5;
 
+  // Auto-inicializar perfiles para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+)
+  useEffect(() => {
+    // Para productos de 2 pantallas, crear 2 perfiles por defecto si no hay
+    if (usesClients && profiles.length === 0 && !account?.profiles?.length) {
+      setProfiles([
+        { slot: 1, clientName: '' },
+        { slot: 2, clientName: '' },
+      ]);
+    }
+  }, [usesClients]);
+
   // Auto-inicializar perfiles SOLO para Netflix Extra (1 perfil fijo)
   useEffect(() => {
     // Solo para Netflix Extra y solo si no hay perfiles todavía
@@ -309,8 +320,13 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       providerRenewalDate: formData.providerRenewalDate,
       saleStatus,
       notes: formData.notes.trim() || undefined,
-      // Si es "Disponible", guardar todos los perfiles (para preservar PINs), si no solo los asignados
-      profiles: isDisponible ? profiles : profiles.filter((p) => p.clientName.trim() !== ''),
+      // Para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+), guardar TODOS los perfiles
+      // Para otros productos, guardar solo los perfiles asignados
+      profiles: isDisponible
+        ? profiles
+        : (usesClients
+            ? profiles  // Mantener todos los perfiles para productos de 2 pantallas
+            : profiles.filter((p) => p.clientName.trim() !== '')),
     };
 
     if (isEditing && account) {
