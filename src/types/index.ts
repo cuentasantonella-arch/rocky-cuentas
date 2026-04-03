@@ -342,7 +342,7 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     id: '9',
     name: 'TNT Sports Premium',
     icon: 'trophy',
-    plans: ['Mensual', 'Anual'],
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#E30613',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png',
   },
