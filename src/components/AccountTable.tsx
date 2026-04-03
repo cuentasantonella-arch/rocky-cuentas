@@ -52,6 +52,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [expandedProfiles, setExpandedProfiles] = useState<Record<string, boolean>>({});
   const [copiedProfile, setCopiedProfile] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [editingExpiryDate, setEditingExpiryDate] = useState<string | null>(null);
+  const [tempExpiryDate, setTempExpiryDate] = useState<string>('');
   // Estado para selección múltiple
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   // Estado para pestañas por producto
@@ -456,6 +458,41 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  // Funciones para editar fecha de vencimiento manualmente
+  const startEditExpiryDate = (accountId: string, currentDate: string) => {
+    setEditingExpiryDate(accountId);
+    setTempExpiryDate(currentDate);
+  };
+
+  const cancelEditExpiryDate = () => {
+    setEditingExpiryDate(null);
+    setTempExpiryDate('');
+  };
+
+  const saveExpiryDate = (account: Account) => {
+    if (!tempExpiryDate) {
+      cancelEditExpiryDate();
+      return;
+    }
+
+    const confirmMsg = `¿Confirmar cambio de fecha de vencimiento?\n\nCuenta: ${account.email}\nFecha anterior: ${formatDate(account.expiryDate)}\nNueva fecha: ${formatDate(tempExpiryDate)}`;
+
+    if (confirm(confirmMsg)) {
+      updateAccount({
+        ...account,
+        expiryDate: tempExpiryDate,
+      });
+      logActivity(
+        'account_updated',
+        `Fecha de vencimiento actualizada para ${account.email}`,
+        `De: ${formatDate(account.expiryDate)} → A: ${formatDate(tempExpiryDate)}`,
+        undefined,
+        account.id
+      );
+    }
+    cancelEditExpiryDate();
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -900,9 +937,43 @@ _Rocky Cuentas - Gracias por su compra_`;
                           <p className="text-yellow-400 text-sm font-medium">En espera</p>
                           <p className="text-xs text-gray-500">Sin asignar</p>
                         </>
+                      ) : editingExpiryDate === account.id ? (
+                        // Modo edición
+                        <div className="flex flex-col gap-1">
+                          <input
+                            type="date"
+                            value={tempExpiryDate}
+                            onChange={(e) => setTempExpiryDate(e.target.value)}
+                            className="px-2 py-1 bg-indigo-600 border border-indigo-400 rounded text-white text-xs w-32"
+                          />
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => saveExpiryDate(account)}
+                              className="px-2 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded transition-colors"
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              onClick={cancelEditExpiryDate}
+                              className="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs rounded transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
                       ) : (
+                        // Modo visualización
                         <>
-                          <p className="text-white text-sm">{formatDate(account.expiryDate)}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="text-white text-sm">{formatDate(account.expiryDate)}</p>
+                            <button
+                              onClick={() => startEditExpiryDate(account.id, account.expiryDate)}
+                              className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                              title="Editar fecha"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                          </div>
                           <p
                             className={`text-xs font-medium ${
                               daysRemaining < 0
