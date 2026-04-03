@@ -24,6 +24,7 @@ import {
   Square,
   CheckSquare,
   X,
+  Calendar,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Account, getAccountStatus, getDaysRemaining, formatDate, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
@@ -938,47 +939,59 @@ _Rocky Cuentas - Gracias por su compra_`;
                           <p className="text-xs text-gray-500">Sin asignar</p>
                         </>
                       ) : editingExpiryDate === account.id ? (
-                        // Modo edición
-                        <div className="flex flex-col gap-2 p-3 bg-indigo-900/30 rounded-lg border border-indigo-500/50">
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs text-indigo-300 font-medium">Nueva fecha:</label>
+                        // Modo edición con date input directo
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <input
+                              type="date"
+                              value={tempExpiryDate}
+                              onChange={(e) => setTempExpiryDate(e.target.value)}
+                              className="px-3 py-2 bg-indigo-600 border border-indigo-400 rounded-lg text-white text-sm cursor-pointer"
+                              autoFocus
+                            />
                           </div>
-                          <input
-                            type="date"
-                            value={tempExpiryDate}
-                            onChange={(e) => setTempExpiryDate(e.target.value)}
-                            className="px-3 py-2 bg-indigo-600 border border-indigo-400 rounded-lg text-white text-sm w-full"
-                          />
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={() => saveExpiryDate(account)}
-                              className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1"
-                            >
-                              <Check className="w-4 h-4" />
-                              Confirmar
-                            </button>
-                            <button
-                              onClick={cancelEditExpiryDate}
-                              className="flex-1 px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1"
-                            >
-                              <X className="w-4 h-4" />
-                              Cancelar
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => saveExpiryDate(account)}
+                            className="px-3 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-lg"
+                            title="Confirmar cambio"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={cancelEditExpiryDate}
+                            className="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white text-xs font-medium flex items-center gap-1 transition-colors"
+                            title="Cancelar"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                       ) : (
-                        // Modo visualización
+                        // Modo visualización con icono de calendario para editar
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-white text-sm font-medium">{formatDate(account.expiryDate)}</p>
-                            <button
-                              onClick={() => startEditExpiryDate(account.id, account.expiryDate)}
-                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-lg"
-                              title="Modificar fecha de vencimiento"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                              Editar Fecha
-                            </button>
+                            <label className="cursor-pointer">
+                              <input
+                                type="date"
+                                value={account.expiryDate}
+                                onChange={(e) => {
+                                  const newDate = e.target.value;
+                                  const confirmMsg = `¿Confirmar cambio de fecha de vencimiento?\n\nCuenta: ${account.email}\nFecha anterior: ${formatDate(account.expiryDate)}\nNueva fecha: ${formatDate(newDate)}`;
+                                  if (confirm(confirmMsg)) {
+                                    updateAccount({ ...account, expiryDate: newDate });
+                                    logActivity(
+                                      'account_updated',
+                                      `Fecha de vencimiento actualizada para ${account.email}`,
+                                      `De: ${formatDate(account.expiryDate)} → A: ${formatDate(newDate)}`,
+                                      undefined,
+                                      account.id
+                                    );
+                                  }
+                                }}
+                                className="absolute opacity-0 w-0 h-0"
+                              />
+                              <Calendar className="w-5 h-5 text-indigo-400 hover:text-indigo-300 transition-colors" title="Click para modificar la fecha" />
+                            </label>
                           </div>
                           <p
                             className={`text-xs font-medium ${
