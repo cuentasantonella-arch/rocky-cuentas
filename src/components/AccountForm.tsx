@@ -49,42 +49,14 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   // Máximo de perfiles permitidos
   const maxProfiles = usesSingleProfile ? 1 : 5;
 
-  // Inicializar perfiles si es necesario
-  const initializeProfiles = (count: number) => {
-    if (count > 0) {
-      const initialProfiles: Profile[] = [];
-      for (let i = 1; i <= count; i++) {
-        // Mantener perfiles existentes si ya existen
-        const existingProfile = profiles.find(p => p.slot === i);
-        if (existingProfile) {
-          initialProfiles.push(existingProfile);
-        } else {
-          initialProfiles.push({ slot: i, clientName: '' });
-        }
-      }
-      setProfiles(initialProfiles);
-    } else if (count === 0) {
-      setProfiles([]);
-    }
-  };
-
-  // Auto-inicializar perfiles cuando se detecta un número en el plan
+  // Auto-inicializar perfiles SOLO para Netflix Extra (1 perfil fijo)
   useEffect(() => {
-    if (!formData.plan || formData.plan === 'Disponible') return;
-
-    const profilesFromPlan = getProfilesCount(formData.plan);
-    // Para Netflix Extra, crear 1 perfil por defecto
-    const targetProfiles = usesSingleProfile ? 1 : profilesFromPlan;
-
-    if (targetProfiles > 0 && profiles.length === 0) {
-      // Detectar número en el plan y pre-llenar
-      const initialProfiles: Profile[] = [];
-      for (let i = 1; i <= targetProfiles; i++) {
-        initialProfiles.push({ slot: i, clientName: '' });
-      }
-      setProfiles(initialProfiles);
+    // Solo para Netflix Extra y solo si no hay perfiles todavía
+    if (usesSingleProfile && profiles.length === 0 && !account?.profiles?.length) {
+      // Crear 1 perfil por defecto para Netflix Extra
+      setProfiles([{ slot: 1, clientName: '' }]);
     }
-  }, [formData.plan, usesSingleProfile]);
+  }, [usesSingleProfile]);
 
   // Agregar un perfil
   const addProfile = () => {
@@ -147,19 +119,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
     setFormData((prev) => ({ ...prev, plan: newPlan, duration: durationFromPlan }));
 
-    // Si el plan es "Disponible", no hacer nada con perfiles
-    if (newPlan === 'Disponible') {
-      return;
-    }
-
-    // Detectar cuántos perfiles tiene el plan y inicializar
-    const profilesFromPlan = getProfilesCount(newPlan);
-    if (profilesFromPlan > 0) {
-      initializeProfiles(profilesFromPlan);
-    } else {
-      // Si no tiene perfiles específicos, limpiar
-      setProfiles([]);
-    }
+    // Los perfiles se crean manualmente con los botones +/-, no automáticamente
   };
 
   const handleProfileChange = (slot: number, clientName: string, clientId?: string) => {
