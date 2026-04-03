@@ -598,7 +598,11 @@ export const getDaysRemaining = (expiryDate: string): number => {
 // Mantiene el mismo día del mes (4 de febrero + 1 año = 4 de febrero del próximo año)
 // Si el día no existe en el mes destino (ej: 31 enero → febrero), ajusta al último día válido
 export const calculateExpiryDate = (saleDate: string, duration: number): string => {
-  const date = new Date(saleDate + 'T00:00:00');
+  if (!saleDate || saleDate.trim() === '') return '';
+  // Extraer solo la parte de fecha si tiene formato completo
+  const dateStr = saleDate.includes('T') ? saleDate.split('T')[0] : saleDate;
+  const date = new Date(dateStr + 'T12:00:00');
+  if (isNaN(date.getTime())) return '';
   const originalDay = date.getDate();
 
   // Sumar meses
@@ -625,11 +629,24 @@ export const getDurationText = (months: number): string => {
   return `${months} meses`;
 };
 
-// Helper para formatear fecha
+// Helper para formatear fecha - evita problemas de timezone
 export const formatDate = (dateString: string): string => {
   if (!dateString || dateString.trim() === '') return 'N/A';
-  const date = new Date(dateString);
+
+  // Intentar extraer solo la parte de fecha (YYYY-MM-DD)
+  let datePart = dateString;
+  if (dateString.includes('T')) {
+    datePart = dateString.split('T')[0];
+  }
+
+  // Verificar que la parte de fecha sea válida
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return 'N/A';
+
+  // Agregar hora del mediodía para evitar problemas de timezone (UTC offset)
+  const dateStr = datePart + 'T12:00:00';
+  const date = new Date(dateStr);
   if (isNaN(date.getTime())) return 'N/A';
+
   return date.toLocaleDateString('es-ES', {
     day: '2-digit',
     month: '2-digit',
@@ -640,6 +657,22 @@ export const formatDate = (dateString: string): string => {
 // Helper para generar ID único
 export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+// Helper para formatear fecha para inputs tipo date (YYYY-MM-DD)
+// Extrae la parte de fecha de un string que puede tener formato YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS
+export const formatDateForInput = (dateString: string): string => {
+  if (!dateString || dateString.trim() === '') return '';
+  // Si ya tiene el formato YYYY-MM-DD, devolverlo directamente
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+  // Si tiene formato completo, extraer solo la parte de fecha
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  // Si no coincide con ningún patrón, intentar parsear
+  const date = new Date(dateString + 'T12:00:00');
+  if (isNaN(date.getTime())) return '';
+  return date.toISOString().split('T')[0];
 };
 
 // Helper para verificar si un producto usa "Clientes" en vez de "Perfiles"

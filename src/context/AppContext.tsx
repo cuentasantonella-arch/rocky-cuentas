@@ -28,6 +28,16 @@ const STORAGE_KEYS = {
   instructives: 'rocky_instructives',
 };
 
+// Función helper para normalizar fechas antes de guardar en Supabase
+// Evita problemas de timezone agregando hora del mediodía
+const normalizeDate = (dateStr: string): string => {
+  if (!dateStr || dateStr.trim() === '') return '';
+  // Si ya tiene hora, devolver como está
+  if (dateStr.includes('T')) return dateStr;
+  // Agregar hora del mediodía para evitar problemas de timezone
+  return dateStr + 'T12:00:00';
+};
+
 // Estado inicial
 const initialState: AppState = {
   accounts: [],
@@ -281,6 +291,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const payload: Partial<AppState> = {};
 
       if (accounts && accounts.length > 0) {
+        // Función para corregir fechas con problema de timezone
+        // Cuando una fecha como "2024-03-15" se guarda en Supabase, se almacena como UTC
+        // Al recuperarla y mostrarla con toLocaleDateString(), resta el offset de timezone
+        // causando que muestre 1 día menos en zonas horarias negativas (ej: UTC-5)
+        const correctTimezoneOffset = (dateStr: string): string => {
+          if (!dateStr || dateStr.trim() === '') return '';
+
+          // Si ya tiene hora explícita (YYYY-MM-DDTHH:MM:SS), no corregir
+          if (dateStr.includes('T')) return dateStr;
+
+          // Agregar hora del mediodía para evitar el problema de timezone
+          // Esto asegura que al mostrar la fecha, no se reste el offset UTC
+          return dateStr + 'T12:00:00';
+        };
+
         payload.accounts = accounts.map(acc => {
           // Verificar si sale_date es una fecha válida
           let correctedSaleDate = acc.sale_date || '';
@@ -290,6 +315,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
               console.warn(`⚠️ Fecha de venta inválida corregida para ${acc.email}: ${acc.sale_date}`);
               correctedSaleDate = '';
+            } else {
+              // Aplicar corrección de timezone
+              correctedSaleDate = correctTimezoneOffset(correctedSaleDate);
+            }
+          }
+
+          // También corregir expiry_date y provider_renewal_date
+          let correctedExpiryDate = acc.expiry_date || '';
+          if (correctedExpiryDate) {
+            const dateObj = new Date(correctedExpiryDate);
+            if (!isNaN(dateObj.getTime()) && dateObj.getFullYear() <= 2100) {
+              correctedExpiryDate = correctTimezoneOffset(correctedExpiryDate);
+            } else {
+              correctedExpiryDate = '';
+            }
+          }
+
+          let correctedProviderRenewalDate = acc.provider_renewal_date || '';
+          if (correctedProviderRenewalDate) {
+            const dateObj = new Date(correctedProviderRenewalDate);
+            if (!isNaN(dateObj.getTime()) && dateObj.getFullYear() <= 2100) {
+              correctedProviderRenewalDate = correctTimezoneOffset(correctedProviderRenewalDate);
+            } else {
+              correctedProviderRenewalDate = '';
             }
           }
 
@@ -302,10 +351,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             clientName: acc.client_name || '',
             clientContact: acc.client_contact || '',
             provider: acc.provider || '',
-            providerRenewalDate: acc.provider_renewal_date || '',
+            providerRenewalDate: correctedProviderRenewalDate,
             saleDate: correctedSaleDate,
             duration: acc.duration || 1,
-            expiryDate: acc.expiry_date || '',
+            expiryDate: correctedExpiryDate,
             saleStatus: acc.sale_status || 'available',
             profiles: acc.profiles ? JSON.parse(acc.profiles) : [],
             notes: acc.notes || '',
@@ -315,22 +364,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         console.log('✅ Cuentas cargadas:', payload.accounts.length);
 
-        // Corregir fechas de venta inválidas en Supabase (ejecutar solo una vez)
+        // Corregir fechas de venta inválidas y de timezone en Supabase
         const now = new Date().toISOString();
         for (const acc of accounts) {
-          let needsCorrection = false;
+          let needsSaleCorrection = false;
+          let needsExpiryCorrection = false;
+          let needsProviderCorrection = false;
+
+          // Verificar sale_date
           if (acc.sale_date) {
             const dateObj = new Date(acc.sale_date);
             if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
-              needsCorrection = true;
+              needsSaleCorrection = true;
+            } else if (!acc.sale_date.includes('T')) {
+              // La fecha necesita corrección de timezone (no tiene hora)
+              needsSaleCorrection = true;
             }
           }
 
-          if (needsCorrection) {
-            console.log(`🔧 Corrigiendo fecha de venta en Supabase para ${acc.email}`);
+          // Verificar expiry_date
+          if (acc.expiry_date) {
+            const dateObj = new Date(acc.expiry_date);
+            if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
+              needsExpiryCorrection = true;
+            } else if (!acc.expiry_date.includes('T')) {
+              needsExpiryCorrection = true;
+            }
+          }
+
+          // Verificar provider_renewal_date
+          if (acc.provider_renewal_date) {
+            const dateObj = new Date(acc.provider_renewal_date);
+            if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
+              needsProviderCorrection = true;
+            } else if (!acc.provider_renewal_date.includes('T')) {
+              needsProviderCorrection = true;
+            }
+          }
+
+          if (needsSaleCorrection || needsExpiryCorrection || needsProviderCorrection) {
+            console.log(`🔧 Corrigiendo fechas en Supabase para ${acc.email}`);
+
+            const updates: any = { updated_at: now };
+
+            if (needsSaleCorrection) {
+              updates.sale_date = acc.sale_date
+                ? (acc.sale_date.includes('T') ? acc.sale_date : acc.sale_date + 'T12:00:00')
+                : null;
+            }
+            if (needsExpiryCorrection) {
+              updates.expiry_date = acc.expiry_date
+                ? (acc.expiry_date.includes('T') ? acc.expiry_date : acc.expiry_date + 'T12:00:00')
+                : null;
+            }
+            if (needsProviderCorrection) {
+              updates.provider_renewal_date = acc.provider_renewal_date
+                ? (acc.provider_renewal_date.includes('T') ? acc.provider_renewal_date : acc.provider_renewal_date + 'T12:00:00')
+                : null;
+            }
+
             await supabase
               .from('accounts')
-              .update({ sale_date: null, updated_at: now })
+              .update(updates)
               .eq('id', acc.id);
           }
         }
@@ -835,10 +930,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 client_name: updatedAccount.clientName || null,
                 client_contact: updatedAccount.clientContact || null,
                 provider: updatedAccount.provider || null,
-                provider_renewal_date: updatedAccount.providerRenewalDate || null,
-                sale_date: updatedAccount.saleDate || null,
+                provider_renewal_date: normalizeDate(updatedAccount.providerRenewalDate),
+                sale_date: normalizeDate(updatedAccount.saleDate),
                 duration: updatedAccount.duration || 1,
-                expiry_date: updatedAccount.expiryDate || null,
+                expiry_date: normalizeDate(updatedAccount.expiryDate),
                 sale_status: updatedAccount.saleStatus || 'available',
                 profiles: JSON.stringify(updatedAccount.profiles || []),
                 notes: updatedAccount.notes || null,
@@ -890,10 +985,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           client_name: newAccount.clientName || null,
           client_contact: newAccount.clientContact || null,
           provider: newAccount.provider || null,
-          provider_renewal_date: newAccount.providerRenewalDate || null,
-          sale_date: newAccount.saleDate || null,
+          provider_renewal_date: normalizeDate(newAccount.providerRenewalDate),
+          sale_date: normalizeDate(newAccount.saleDate),
           duration: newAccount.duration || 1,
-          expiry_date: newAccount.expiryDate || null,
+          expiry_date: normalizeDate(newAccount.expiryDate),
           sale_status: newAccount.saleStatus || 'available',
           profiles: JSON.stringify(newAccount.profiles || []),
           notes: newAccount.notes || null,
@@ -965,10 +1060,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           client_name: updatedAccount.clientName || null,
           client_contact: updatedAccount.clientContact || null,
           provider: updatedAccount.provider || null,
-          provider_renewal_date: updatedAccount.providerRenewalDate || null,
-          sale_date: updatedAccount.saleDate || null,
+          provider_renewal_date: normalizeDate(updatedAccount.providerRenewalDate),
+          sale_date: normalizeDate(updatedAccount.saleDate),
           duration: updatedAccount.duration || 1,
-          expiry_date: updatedAccount.expiryDate || null,
+          expiry_date: normalizeDate(updatedAccount.expiryDate),
           sale_status: updatedAccount.saleStatus || 'available',
           profiles: JSON.stringify(updatedAccount.profiles || []),
           notes: updatedAccount.notes || null,
@@ -1032,10 +1127,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           client_name: acc.clientName || null,
           client_contact: acc.clientContact || null,
           provider: acc.provider || null,
-          provider_renewal_date: acc.providerRenewalDate || null,
-          sale_date: acc.saleDate || null,
+          provider_renewal_date: normalizeDate(acc.providerRenewalDate),
+          sale_date: normalizeDate(acc.saleDate),
           duration: acc.duration || 1,
-          expiry_date: acc.expiryDate || null,
+          expiry_date: normalizeDate(acc.expiryDate),
           sale_status: acc.saleStatus || 'available',
           profiles: JSON.stringify(acc.profiles || []),
           notes: acc.notes || null,

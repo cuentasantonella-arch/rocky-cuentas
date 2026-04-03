@@ -27,7 +27,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account, getAccountStatus, getDaysRemaining, formatDate, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
+import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
 
 interface AccountTableProps {
   accounts: Account[];
@@ -464,7 +464,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   // Funciones para editar fecha de vencimiento manualmente
   const startEditExpiryDate = (accountId: string, currentDate: string) => {
     setEditingExpiryDate(accountId);
-    setTempExpiryDate(currentDate);
+    // Convertir al formato YYYY-MM-DD para el input
+    setTempExpiryDate(formatDateForInput(currentDate));
   };
 
   const cancelEditExpiryDate = () => {
@@ -970,7 +971,7 @@ _Rocky Cuentas - Gracias por su compra_`;
                           <div className="flex items-center gap-2">
                             <input
                               type="date"
-                              value={tempExpiryDate}
+                              value={formatDateForInput(tempExpiryDate)}
                               onChange={(e) => setTempExpiryDate(e.target.value)}
                               className="px-3 py-2 bg-indigo-600 border border-indigo-400 rounded-lg text-white text-sm cursor-pointer"
                               autoFocus

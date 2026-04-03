@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, User, Users, Lock, Calendar, Check, X as XIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount } from '../types';
+import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount, formatDateForInput } from '../types';
 
 interface AccountFormProps {
   account?: Account;
@@ -742,7 +742,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     <input
                       type="date"
                       name="saleDate"
-                      value={formData.saleDate}
+                      value={formatDateForInput(formData.saleDate)}
                       onChange={handleChange}
                       className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
                         errors.saleDate ? 'border-red-500' : ''
@@ -784,7 +784,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                         <div className="relative flex-1">
                           <input
                             type="date"
-                            value={tempManualExpiryDate}
+                            value={formatDateForInput(tempManualExpiryDate)}
                             onChange={(e) => setTempManualExpiryDate(e.target.value)}
                             className="w-full px-4 py-2.5 border rounded-lg font-medium"
                             style={{ backgroundColor: 'var(--bg-input)', color: 'var(--accent-primary)', borderColor: '#6366f1' }}
@@ -795,7 +795,9 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                           type="button"
                           onClick={() => {
                             if (tempManualExpiryDate) {
-                              setManualExpiryDate(tempManualExpiryDate);
+                              // Guardar en formato con hora para evitar problemas de timezone
+                              const formattedDate = formatDateForInput(tempManualExpiryDate);
+                              setManualExpiryDate(formattedDate ? formattedDate + 'T12:00:00' : '');
                               setIsManualExpiry(true);
                             }
                             setTempManualExpiryDate('');
@@ -822,13 +824,19 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                       // Modo visualización
                       <div className="flex items-center gap-2">
                         <div className="flex-1 px-4 py-2.5 border rounded-lg font-medium" style={{ backgroundColor: 'var(--bg-input)', color: 'var(--accent-primary)', borderColor: isManualExpiry ? '#f59e0b' : 'var(--border-color)' }}>
-                          {expiryDatePreview ? new Date(expiryDatePreview).toLocaleDateString('es-ES') : '-'}
+                          {expiryDatePreview ? (() => {
+                            // Agregar hora del mediodía para evitar problemas de timezone
+                            const dateStr = expiryDatePreview.includes('T') ? expiryDatePreview : expiryDatePreview + 'T12:00:00';
+                            return new Date(dateStr).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                          })() : '-'}
                         </div>
                         <button
                           type="button"
                           onClick={() => {
                             // Iniciar con la fecha actual (calculada o manual)
-                            setTempManualExpiryDate(manualExpiryDate || calculatedExpiryDate || new Date().toISOString().split('T')[0]);
+                            // Extraer solo la parte de fecha para el input
+                            const dateToUse = formatDateForInput(manualExpiryDate) || formatDateForInput(calculatedExpiryDate) || new Date().toISOString().split('T')[0];
+                            setTempManualExpiryDate(dateToUse);
                           }}
                           className="px-3 py-2.5 border-2 border-indigo-500 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors flex items-center justify-center"
                           title="Modificar fecha manualmente"
@@ -885,7 +893,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                   <input
                     type="date"
                     name="providerRenewalDate"
-                    value={formData.providerRenewalDate}
+                    value={formatDateForInput(formData.providerRenewalDate)}
                     onChange={handleChange}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
                       errors.providerRenewalDate ? 'border-red-500' : ''
