@@ -54,20 +54,23 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const maxProfiles = usesSingleProfile ? 1 : 5;
 
   // Auto-inicializar perfiles para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+)
+  // Solo se ejecuta UNA VEZ al cargar la cuenta
   useEffect(() => {
+    if (!account) return; // Solo para edición, no para cuentas nuevas
+
     // Para productos de 2 pantallas, asegurar que siempre haya 2 perfiles
     if (usesClients) {
-      const currentProfiles = account?.profiles || profiles;
+      const loadedProfiles = account.profiles || [];
       // Si tiene menos de 2 perfiles, agregar los faltantes
-      if (currentProfiles.length < 2) {
-        const newProfiles = [...currentProfiles];
-        for (let i = currentProfiles.length + 1; i <= 2; i++) {
+      if (loadedProfiles.length < 2) {
+        const newProfiles = [...loadedProfiles];
+        for (let i = loadedProfiles.length + 1; i <= 2; i++) {
           newProfiles.push({ slot: i, clientName: '' });
         }
         setProfiles(newProfiles);
       }
     }
-  }, [usesClients]);
+  }, []); // Empty dependency array = solo se ejecuta al montar
 
   // Auto-inicializar perfiles SOLO para Netflix Extra (1 perfil fijo)
   useEffect(() => {
