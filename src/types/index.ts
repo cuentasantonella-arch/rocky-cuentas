@@ -183,6 +183,20 @@ export interface ImportRow {
 // Productos predefinidos con logos e instructivos
 export const DEFAULT_PRODUCTS: Product[] = [
   {
+    id: 'catalogo',
+    name: 'Catalogo',
+    icon: 'book-open',
+    plans: ['Ver Catalogo'],
+    color: '#6363F1',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Visual_Studio_Code_1.35_icon.svg/1200px-Visual_Studio_Code_1.35_icon.svg.png',
+    instructive: `Hola 👋 ¡Bienvenido/a!
+Gracias por contactarnos.
+Te compartimos nuestro catálogo para que puedas revisar nuestros servicios y valores:
+👉 https://rockycuentas.rdi.store
+
+Quedamos atentos para ayudarte y resolver cualquier consulta. 😊`,
+  },
+  {
     id: '1',
     name: 'Netflix',
     icon: 'tv',
