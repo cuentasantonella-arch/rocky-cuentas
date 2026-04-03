@@ -281,26 +281,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const payload: Partial<AppState> = {};
 
       if (accounts && accounts.length > 0) {
-        payload.accounts = accounts.map(acc => ({
-          id: acc.id,
-          email: acc.email,
-          password: acc.password || '',
-          productType: acc.product_type,
-          plan: acc.plan,
-          clientName: acc.client_name || '',
-          clientContact: acc.client_contact || '',
-          provider: acc.provider || '',
-          providerRenewalDate: acc.provider_renewal_date || '',
-          saleDate: acc.sale_date || '',
-          duration: acc.duration || 1,
-          expiryDate: acc.expiry_date || '',
-          saleStatus: acc.sale_status || 'available',
-          profiles: acc.profiles ? JSON.parse(acc.profiles) : [],
-          notes: acc.notes || '',
-          createdAt: acc.created_at,
-          updatedAt: acc.updated_at,
-        }));
+        payload.accounts = accounts.map(acc => {
+          // Verificar si sale_date es una fecha válida
+          let correctedSaleDate = acc.sale_date || '';
+          if (correctedSaleDate) {
+            const dateObj = new Date(correctedSaleDate);
+            // Si la fecha no es válida o es una fecha futura muy lejana, corregirla
+            if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
+              console.warn(`⚠️ Fecha de venta inválida corregida para ${acc.email}: ${acc.sale_date}`);
+              correctedSaleDate = '';
+            }
+          }
+
+          return {
+            id: acc.id,
+            email: acc.email,
+            password: acc.password || '',
+            productType: acc.product_type,
+            plan: acc.plan,
+            clientName: acc.client_name || '',
+            clientContact: acc.client_contact || '',
+            provider: acc.provider || '',
+            providerRenewalDate: acc.provider_renewal_date || '',
+            saleDate: correctedSaleDate,
+            duration: acc.duration || 1,
+            expiryDate: acc.expiry_date || '',
+            saleStatus: acc.sale_status || 'available',
+            profiles: acc.profiles ? JSON.parse(acc.profiles) : [],
+            notes: acc.notes || '',
+            createdAt: acc.created_at,
+            updatedAt: acc.updated_at,
+          };
+        });
         console.log('✅ Cuentas cargadas:', payload.accounts.length);
+
+        // Corregir fechas de venta inválidas en Supabase (ejecutar solo una vez)
+        const now = new Date().toISOString();
+        for (const acc of accounts) {
+          let needsCorrection = false;
+          if (acc.sale_date) {
+            const dateObj = new Date(acc.sale_date);
+            if (isNaN(dateObj.getTime()) || dateObj.getFullYear() > 2100) {
+              needsCorrection = true;
+            }
+          }
+
+          if (needsCorrection) {
+            console.log(`🔧 Corrigiendo fecha de venta en Supabase para ${acc.email}`);
+            await supabase
+              .from('accounts')
+              .update({ sale_date: null, updated_at: now })
+              .eq('id', acc.id);
+          }
+        }
       }
 
       // Cargar productos de Supabase y siempre combinar con instructivos de DEFAULT_PRODUCTS
