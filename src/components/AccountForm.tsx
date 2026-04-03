@@ -55,12 +55,17 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
   // Auto-inicializar perfiles para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+)
   useEffect(() => {
-    // Para productos de 2 pantallas, crear 2 perfiles por defecto si no hay
-    if (usesClients && profiles.length === 0 && !account?.profiles?.length) {
-      setProfiles([
-        { slot: 1, clientName: '' },
-        { slot: 2, clientName: '' },
-      ]);
+    // Para productos de 2 pantallas, asegurar que siempre haya 2 perfiles
+    if (usesClients) {
+      const currentProfiles = account?.profiles || profiles;
+      // Si tiene menos de 2 perfiles, agregar los faltantes
+      if (currentProfiles.length < 2) {
+        const newProfiles = [...currentProfiles];
+        for (let i = currentProfiles.length + 1; i <= 2; i++) {
+          newProfiles.push({ slot: i, clientName: '' });
+        }
+        setProfiles(newProfiles);
+      }
     }
   }, [usesClients]);
 
@@ -250,7 +255,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     if (!formData.provider.trim()) newErrors.provider = 'El proveedor es requerido';
 
     // Validar que si hay perfiles y NO es "Disponible", al menos uno esté asignado
-    if (formData.plan !== 'Disponible' && profilesCount > 0) {
+    // PERO para productos de 2 pantallas, permitir perfiles vacíos (para poder vender uno a la vez)
+    if (formData.plan !== 'Disponible' && profilesCount > 0 && !usesClients) {
       const assignedCount = profiles.filter(p => p.clientName.trim()).length;
       if (assignedCount === 0) {
         newErrors.profiles = 'Debes asignar al menos un perfil antes de vender.';
