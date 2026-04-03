@@ -380,18 +380,23 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
   },
   {
     id: '14',
-    name: 'Netflix Con Pines',
+    name: 'Netflix Extra',
     icon: 'tv',
-    plans: ['5 Perfiles con PIN'],
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `🔹📺✨ CERRAR SESIÓN EN NETFLIX CON PINES
+    instructive: `🔹📺✨ NETFLIX EXTRA - 1 PIN
 
-✅ A continuación, te compartimos un video explicativo súper útil para aprender cómo cerrar sesión en Netflix, incluso cuando todos los perfiles cuentan con PIN de seguridad 🔐🙌:
+✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
 
 🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
 
-🚀 ¡Una guía práctica que te ayudará a gestionar tu cuenta de forma rápida y segura!`,
+📌 CARACTERÍSTICAS:
+• 1 solo perfil con PIN de seguridad
+• Ideal para uso individual
+• Plan flexible: Mensual, 3, 6 o 12 meses
+
+💡 ¡Una guía práctica para gestionar tu cuenta de forma rápida y segura!`,
   },
   {
     id: '15',
@@ -523,10 +528,21 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     color: '#E30613',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png',
   },
+  {
+    id: '23',
+    name: 'Vix Premium',
+    icon: 'play-circle',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#E50914',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
+
+// Productos que usan 1 solo perfil con PIN (ej: Netflix Extra)
+export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],
