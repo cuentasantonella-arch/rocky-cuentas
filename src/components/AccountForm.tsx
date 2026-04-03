@@ -62,6 +62,45 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     }
   }, [usesSingleProfile]);
 
+  // Sincronizar formData cuando cambia la cuenta que se está editando
+  useEffect(() => {
+    if (account) {
+      setFormData({
+        email: account.email || '',
+        password: account.password || '',
+        productType: account.productType || state.products[0]?.name || '',
+        plan: account.plan || '',
+        clientName: account.clientName || '',
+        clientContact: account.clientContact || '',
+        saleDate: account.saleDate || '',
+        duration: account.duration || 1,
+        provider: account.provider || '',
+        providerRenewalDate: account.providerRenewalDate || '',
+        notes: account.notes || '',
+        saleStatus: account.saleStatus || 'available' as SaleStatus,
+      });
+      setProfiles(account.profiles || []);
+
+      // Verificar si la fecha de vencimiento es manual (difiere de la calculada)
+      if (account.expiryDate) {
+        const calculated = account.saleDate && account.duration
+          ? calculateExpiryDate(account.saleDate, Number(account.duration))
+          : '';
+        if (account.expiryDate !== calculated) {
+          setManualExpiryDate(account.expiryDate);
+          setIsManualExpiry(true);
+        } else {
+          setManualExpiryDate('');
+          setIsManualExpiry(false);
+        }
+      } else {
+        setManualExpiryDate('');
+        setIsManualExpiry(false);
+      }
+      setTempManualExpiryDate('');
+    }
+  }, [account?.id]);
+
   // Agregar un perfil
   const addProfile = () => {
     if (profiles.length < maxProfiles) {
@@ -297,20 +336,6 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     : '';
   // Si estamos editando la fecha (tempManualExpiryDate tiene valor), mostrarla
   const expiryDatePreview = tempManualExpiryDate || (isManualExpiry ? manualExpiryDate : calculatedExpiryDate);
-
-  // Inicializar fecha manual si estamos editando una cuenta con fecha de vencimiento
-  useEffect(() => {
-    if (account?.expiryDate) {
-      // Verificar si la fecha actual difiere de la calculada
-      const calculated = formData.saleDate && formData.duration
-        ? calculateExpiryDate(formData.saleDate, Number(formData.duration))
-        : '';
-      if (account.expiryDate !== calculated && account.expiryDate) {
-        setManualExpiryDate(account.expiryDate);
-        setIsManualExpiry(true);
-      }
-    }
-  }, [account?.id]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
