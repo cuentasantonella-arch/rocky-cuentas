@@ -32,7 +32,7 @@ interface ChatUser {
 }
 
 export function Chat() {
-  const { currentUser } = useAuth();
+  const { currentUser, users } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'group' | 'direct'>('group');
@@ -44,48 +44,73 @@ export function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar usuarios del sistema
+  // Cargar usuarios del sistema desde clients table
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        // Intentar cargar desde tabla de usuarios del sistema
+        // Cargar desde la tabla clients (donde están los usuarios)
         const { data, error } = await supabase
-          .from('users')
-          .select('id, name, role')
+          .from('clients')
+          .select('id, name, email, role')
           .order('name');
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading users:', error);
+        if (error) {
+          console.log('Error loading from clients:', error.message);
+          // Fallback: usar usuarios del AuthContext
+          setSystemUsers(
+            users
+              .filter(u => u.id !== currentUser?.id && u.role !== 'admin')
+              .map(u => ({
+                id: u.id,
+                name: u.name || u.email || 'Usuario',
+                role: u.role || 'collaborator'
+              }))
+          );
+          return;
         }
 
-        // Si no hay tabla de usuarios, usar los perfiles de auth
-        if (!data || data.length === 0) {
-          const { data: profilesData } = await supabase
-            .from('profiles')
-            .select('id, name, role')
-            .order('name');
+        if (data && data.length > 0) {
+          // Filtrar usuarios activos (excluir admin y usuario actual)
+          const filteredUsers = data.filter((u: any) => {
+            const isCurrentUser = u.id === currentUser?.id;
+            const isAdmin = u.role === 'admin';
+            return !isCurrentUser && !isAdmin;
+          });
 
-          if (profilesData) {
-            setSystemUsers(profilesData.map(p => ({
-              id: p.id,
-              name: p.name || 'Usuario',
-              role: p.role || 'collaborator'
-            })));
-          }
-        } else {
-          setSystemUsers(data.map(u => ({
+          setSystemUsers(filteredUsers.map((u: any) => ({
             id: u.id,
-            name: u.name,
+            name: u.name || u.email || 'Usuario',
             role: u.role || 'collaborator'
           })));
+        } else {
+          // Fallback si no hay datos
+          setSystemUsers(
+            users
+              .filter(u => u.id !== currentUser?.id && u.role !== 'admin')
+              .map(u => ({
+                id: u.id,
+                name: u.name || u.email || 'Usuario',
+                role: u.role || 'collaborator'
+              }))
+          );
         }
       } catch (error) {
         console.error('Error loading users:', error);
+        // Fallback: usar usuarios del AuthContext
+        setSystemUsers(
+          users
+            .filter(u => u.id !== currentUser?.id && u.role !== 'admin')
+            .map(u => ({
+              id: u.id,
+              name: u.name || u.email || 'Usuario',
+              role: u.role || 'collaborator'
+            }))
+        );
       }
     };
 
     loadUsers();
-  }, []);
+  }, [users, currentUser?.id]);
 
   // Cargar mensajes
   useEffect(() => {
