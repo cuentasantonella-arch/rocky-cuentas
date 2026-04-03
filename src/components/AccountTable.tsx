@@ -939,24 +939,29 @@ _Rocky Cuentas - Gracias por su compra_`;
                         </>
                       ) : editingExpiryDate === account.id ? (
                         // Modo edición
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-2 p-3 bg-indigo-900/30 rounded-lg border border-indigo-500/50">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs text-indigo-300 font-medium">Nueva fecha:</label>
+                          </div>
                           <input
                             type="date"
                             value={tempExpiryDate}
                             onChange={(e) => setTempExpiryDate(e.target.value)}
-                            className="px-2 py-1 bg-indigo-600 border border-indigo-400 rounded text-white text-xs w-32"
+                            className="px-3 py-2 bg-indigo-600 border border-indigo-400 rounded-lg text-white text-sm w-full"
                           />
-                          <div className="flex gap-1">
+                          <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => saveExpiryDate(account)}
-                              className="px-2 py-1 bg-green-600 hover:bg-green-500 text-white text-xs rounded transition-colors"
+                              className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1"
                             >
-                              Guardar
+                              <Check className="w-4 h-4" />
+                              Confirmar
                             </button>
                             <button
                               onClick={cancelEditExpiryDate}
-                              className="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs rounded transition-colors"
+                              className="flex-1 px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1"
                             >
+                              <X className="w-4 h-4" />
                               Cancelar
                             </button>
                           </div>
@@ -964,14 +969,15 @@ _Rocky Cuentas - Gracias por su compra_`;
                       ) : (
                         // Modo visualización
                         <>
-                          <div className="flex items-center gap-1">
-                            <p className="text-white text-sm">{formatDate(account.expiryDate)}</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-white text-sm font-medium">{formatDate(account.expiryDate)}</p>
                             <button
                               onClick={() => startEditExpiryDate(account.id, account.expiryDate)}
-                              className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
-                              title="Editar fecha"
+                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-lg"
+                              title="Modificar fecha de vencimiento"
                             >
                               <Edit2 className="w-3 h-3" />
+                              Editar Fecha
                             </button>
                           </div>
                           <p
