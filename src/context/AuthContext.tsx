@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, email, role, password')
+        .select('id, name, email, role, password, created_at')
         .order('name');
 
       if (error) {
@@ -88,16 +88,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           createdAt: c.created_at,
         }));
 
-        // Fusionar: locales + nuevos de Supabase
+        // Fusionar: actualizar locales Y agregar nuevos de Supabase
         const localIds = users.map(u => u.id);
         const newFromSupabase = supabaseUsers.filter(u => !localIds.includes(u.id));
 
+        let mergedUsers = [...users];
+
+        // Agregar usuarios nuevos de Supabase
         if (newFromSupabase.length > 0) {
-          const mergedUsers = [...users, ...newFromSupabase];
-          setUsers(mergedUsers);
-          saveUsersToStorage(mergedUsers);
-          console.log('Sincronizados', newFromSupabase.length, 'usuarios de Supabase');
+          mergedUsers = [...mergedUsers, ...newFromSupabase];
+          console.log('Agregados', newFromSupabase.length, 'usuarios de Supabase');
         }
+
+        // Actualizar usuarios existentes si tienen datos diferentes
+        supabaseUsers.forEach(supabaseUser => {
+          const localIndex = mergedUsers.findIndex(u => u.id === supabaseUser.id);
+          if (localIndex >= 0) {
+            // Actualizar datos del usuario local con datos de Supabase
+            mergedUsers[localIndex] = {
+              ...mergedUsers[localIndex],
+              name: supabaseUser.name,
+              email: supabaseUser.email,
+              role: supabaseUser.role,
+              password: supabaseUser.password,
+            };
+          }
+        });
+
+        setUsers(mergedUsers);
+        saveUsersToStorage(mergedUsers);
+        console.log('Sincronizados', newFromSupabase.length, 'usuarios nuevos de Supabase');
       }
       setSyncStatus('done');
     } catch (e) {
@@ -133,38 +153,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  // Login - verifica contra usuarios locales
+  // Login - verifica contra Supabase Y usuarios locales
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // Normalizar nombre de usuario
       const normalizedUsername = username.trim().toLowerCase();
 
       console.log('Intentando login con:', normalizedUsername);
-      console.log('Usuarios disponibles:', users);
 
-      // Buscar en usuarios locales (incluye admin por defecto)
-      const user = users.find(u => u.name.toLowerCase() === normalizedUsername);
+      // 1. PRIMERO: Verificar en Supabase (fuente de verdad)
+      try {
+        const { data: supabaseUser, error: supabaseError } = await supabase
+          .from('clients')
+          .select('id, name, email, role, password, created_at')
+          .eq('name', normalizedUsername)
+          .single();
 
-      if (!user) {
+        if (!supabaseError && supabaseUser) {
+          console.log('Usuario encontrado en Supabase:', supabaseUser);
+
+          if (supabaseUser.password !== password) {
+            console.log('Contraseña incorrecta (Supabase)');
+            return { success: false, error: 'Contraseña incorrecta' };
+          }
+
+          // Crear usuario del estado desde Supabase
+          const userFromSupabase: User = {
+            id: supabaseUser.id,
+            name: supabaseUser.name,
+            email: supabaseUser.email || '',
+            role: (supabaseUser.role as UserRole) || 'collaborator',
+            password: supabaseUser.password,
+            createdAt: supabaseUser.created_at,
+          };
+
+          console.log('Login exitoso (desde Supabase)');
+          setCurrentUser(userFromSupabase);
+
+          // Guardar en localStorage para persistencia de sesión
+          localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userFromSupabase));
+
+          // Actualizar lista local si el usuario no existe
+          if (!users.find(u => u.id === supabaseUser.id)) {
+            const updatedUsers = [...users, userFromSupabase];
+            setUsers(updatedUsers);
+            saveUsersToStorage(updatedUsers);
+          }
+
+          return { success: true };
+        }
+      } catch (e) {
+        console.log('No se encontró en Supabase o error:', e);
+      }
+
+      // 2. SEGUNDO: Verificar en usuarios locales (fallback para admin)
+      const localUser = users.find(u => u.name.toLowerCase() === normalizedUsername);
+
+      if (!localUser) {
         console.log('Usuario no encontrado');
         return { success: false, error: 'Usuario no encontrado' };
       }
 
-      console.log('Usuario encontrado:', user);
+      console.log('Usuario encontrado localmente:', localUser);
 
-      if (user.password !== password) {
+      if (localUser.password !== password) {
         console.log('Contraseña incorrecta');
         return { success: false, error: 'Contraseña incorrecta' };
       }
 
-      console.log('Login exitoso');
-      setCurrentUser(user);
+      console.log('Login exitoso (local)');
+      setCurrentUser(localUser);
 
       // Guardar en localStorage para persistencia de sesión
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(localUser));
 
       // Sincronizar en segundo plano con Supabase
-      syncUserToSupabase(user);
+      syncUserToSupabase(localUser);
 
       return { success: true };
     } catch (e) {
@@ -224,10 +288,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Normalizar nombre
       const normalizedName = userData.name.trim().toLowerCase();
 
-      // Verificar si ya existe
-      const exists = users.find(u => u.name.toLowerCase() === normalizedName);
-      if (exists) {
+      // Verificar si ya existe en locales
+      const existsLocal = users.find(u => u.name.toLowerCase() === normalizedName);
+      if (existsLocal) {
         return { success: false, error: 'El nombre de usuario ya existe' };
+      }
+
+      // Verificar si ya existe en Supabase
+      try {
+        const { data: existingSupabase } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('name', normalizedName)
+          .single();
+
+        if (existingSupabase) {
+          return { success: false, error: 'El nombre de usuario ya existe en el servidor' };
+        }
+      } catch (e) {
+        // Si hay error, significa que no existe, continuamos
       }
 
       // Crear nuevo usuario
@@ -242,19 +321,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('Creando usuario:', newUser);
 
-      // Guardar en localStorage (siempre funciona)
-      const updatedUsers = [...users, newUser];
-      console.log('Usuarios actualizados:', updatedUsers);
+      // 1. PRIMERO: Guardar en Supabase (fuente principal)
+      try {
+        const { error: supabaseError } = await supabase
+          .from('clients')
+          .insert([{
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            password: newUser.password,
+            created_at: newUser.createdAt,
+            updated_at: new Date().toISOString(),
+          }]);
 
+        if (supabaseError) {
+          console.error('Error guardando en Supabase:', supabaseError);
+          // No fallamos, guardamos localmente al menos
+        } else {
+          console.log('Usuario guardado en Supabase exitosamente');
+        }
+      } catch (e) {
+        console.error('Error al conectar con Supabase:', e);
+      }
+
+      // 2. SEGUNDO: Guardar en localStorage
+      const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
       saveUsersToStorage(updatedUsers);
-
-      // Verificar que se guardó
-      const stored = localStorage.getItem(STORAGE_KEY);
-      console.log('localStorage después de guardar:', stored);
-
-      // Intentar sincronizar con Supabase en segundo plano
-      syncUserToSupabase(newUser);
 
       return { success: true };
     } catch (e) {
