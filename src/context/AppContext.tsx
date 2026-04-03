@@ -164,6 +164,7 @@ interface AppContextType {
   state: AppState;
   dispatch: React.Dispatch<Action>;
   isLoading: boolean;
+  isInitialSync: boolean;
   isOnline: boolean;
   addAccount: (account: Omit<Account, 'id' | 'expiryDate' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateAccount: (account: Account, reason?: string) => Promise<void>;
@@ -193,6 +194,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isInitialSync, setIsInitialSync] = React.useState(true);
   const [isOnline, setIsOnline] = React.useState(false);
   const [realtimeStatus, setRealtimeStatus] = React.useState<Record<string, boolean>>({});
 
@@ -200,7 +202,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadFromSupabase = async () => {
     try {
       setIsLoading(true);
-      console.log('🔄 Cargando datos desde Supabase...');
+      setIsInitialSync(true);
+      console.log('🔄 Sincronizando con Supabase...');
 
       // Intentar habilitar Realtime para todas las tablas
       console.log('🔔 Configurando Realtime para tablas...');
@@ -441,12 +444,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: 'SET_STATE', payload });
       setIsOnline(true);
-      console.log('✅ Datos cargados desde Supabase');
+      setIsInitialSync(false);
+      console.log('✅ Datos sincronizados desde Supabase');
 
     } catch (error) {
       console.error('❌ Error general al cargar:', error);
       // Cargar desde localStorage como respaldo
       loadFromLocalStorage();
+      setIsInitialSync(false);
     } finally {
       setIsLoading(false);
     }
@@ -1234,6 +1239,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         state,
         dispatch,
         isLoading,
+        isInitialSync,
         isOnline,
         addAccount,
         updateAccount,

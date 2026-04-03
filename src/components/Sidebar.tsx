@@ -38,7 +38,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  const { state, isOnline, refreshData } = useApp();
+  const { state, isOnline, isInitialSync, refreshData } = useApp();
   const { currentUser, logout, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
@@ -359,7 +359,9 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             disabled={isSyncing || !isOnline}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-2"
             style={{
-              backgroundColor: syncStatus === 'success'
+              backgroundColor: isInitialSync
+                ? 'rgba(99, 102, 241, 0.3)'
+                : syncStatus === 'success'
                 ? 'rgba(34, 197, 94, 0.2)'
                 : syncStatus === 'error'
                 ? 'rgba(239, 68, 68, 0.2)'
@@ -369,7 +371,12 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
               opacity: isSyncing || !isOnline ? 0.6 : 1,
             }}
           >
-            {isSyncing ? (
+            {isInitialSync ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
+                <span className="text-sm text-indigo-400 font-medium">Sincronizando...</span>
+              </>
+            ) : isSyncing ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin text-white" />
                 <span className="text-sm text-white">Sincronizando...</span>
@@ -391,6 +398,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                   Sincronizar
                 </span>
                 {!isOnline && <span className="text-xs text-gray-500 ml-1">(Offline)</span>}
+                {isOnline && <span className="text-xs text-green-400 ml-1">• En línea</span>}
               </>
             )}
           </button>
@@ -403,12 +411,16 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             disabled={!isOnline}
             className="w-full flex items-center justify-center p-2 rounded-lg mb-2 transition-colors"
             style={{
-              backgroundColor: isOnline ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+              backgroundColor: isInitialSync
+                ? 'rgba(99, 102, 241, 0.3)'
+                : isOnline
+                ? 'var(--accent-primary)'
+                : 'var(--bg-elevated)',
               opacity: !isOnline ? 0.6 : 1,
             }}
-            title={isOnline ? 'Sincronizar datos' : 'Sin conexión'}
+            title={isInitialSync ? 'Sincronizando...' : isOnline ? 'Sincronizar datos' : 'Sin conexión'}
           >
-            <RefreshCw className={`w-4 h-4 ${!isOnline ? 'text-gray-400' : 'text-white'}`} />
+            <RefreshCw className={`w-4 h-4 animate-spin ${isInitialSync ? 'text-indigo-400' : !isOnline ? 'text-gray-400' : 'text-white'}`} />
           </button>
         )}
 
