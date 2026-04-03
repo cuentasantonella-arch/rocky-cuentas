@@ -269,7 +269,7 @@ Estamos siempre disponibles para ayudarte 💙
     id: '5',
     name: 'MaxPlayer',
     icon: 'film',
-    plans: ['Básico', 'Premium'],
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#7B2CBF',
     imageUrl: '/images/maxplayer-logo.png',
     instructive: `📺 INSTRUCTIVO DE USO – MAX PLAYER 🎬
@@ -334,7 +334,7 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     id: '8',
     name: 'HBO Max',
     icon: 'tv-2',
-    plans: ['Estándar', 'Con TNT Sports'],
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#B535F6',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
   },
@@ -498,6 +498,30 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
 🔗 https://rocky-cuentas.vercel.app
 
 🚀 ¡Sigue el paso a paso y comienza a disfrutar tu contenido favorito sin complicaciones!`,
+  },
+  {
+    id: '20',
+    name: 'Canva Pro',
+    icon: 'palette',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#7D2AE8',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Crunchyroll_Logo.png/1280px-Canva_Logo.png',
+  },
+  {
+    id: '21',
+    name: 'Bleezed Player',
+    icon: 'film',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#FF6B35',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Crunchyroll_Logo.png/1280px-Bleezed_Logo.png',
+  },
+  {
+    id: '22',
+    name: 'VtrPlay',
+    icon: 'tv',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#E30613',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/TNT_Sports_2020_logo.svg/3840px-TNT_Sports_2020_logo.svg.png',
   },
 ];
 
