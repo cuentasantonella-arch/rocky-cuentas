@@ -24,13 +24,14 @@ import {
   WifiOff,
   Check,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getAccountStatus } from '../types';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'chat';
 
 interface SidebarProps {
   currentPage: Page;
@@ -75,6 +76,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     { id: 'accounts' as Page, label: 'Cuentas', icon: CreditCard },
     { id: 'add' as Page, label: 'Agregar', icon: PlusCircle, hasSubmenu: true },
     { id: 'clients' as Page, label: 'Clientes', icon: UserCircle },
+    { id: 'chat' as Page, label: 'Chat', icon: MessageCircle },
     { id: 'products' as Page, label: 'Productos', icon: Package },
     { id: 'providers' as Page, label: 'Proveedores', icon: Users },
     { id: 'instructivos' as Page, label: 'Instructivos', icon: BookOpen },

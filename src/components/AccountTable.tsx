@@ -741,6 +741,15 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
               </th>
               <th
                 className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide cursor-pointer hover:text-white"
+                onClick={() => handleSort('saleDate')}
+              >
+                <div className="flex items-center gap-1">
+                  Venta
+                  <SortIcon field="saleDate" />
+                </div>
+              </th>
+              <th
+                className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide cursor-pointer hover:text-white"
                 onClick={() => handleSort('expiryDate')}
               >
                 <div className="flex items-center gap-1">
@@ -931,6 +940,20 @@ _Rocky Cuentas - Gracias por su compra_`;
                           <Copy className="w-3 h-3" />
                           Entregar
                         </button>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div>
+                      {account.saleDate ? (
+                        <>
+                          <p className="text-white text-sm font-medium">{formatDate(account.saleDate)}</p>
+                          {account.duration && (
+                            <p className="text-xs text-gray-500">{account.duration === 1 ? '1 mes' : `${account.duration} meses`}</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-gray-500 text-sm">-</p>
                       )}
                     </div>
                   </td>
@@ -1134,7 +1157,7 @@ _Rocky Cuentas - Gracias por su compra_`;
                 {/* Fila expandida de perfiles */}
                 {isExpanded && hasProfiles && (
                   <tr className="bg-[#0f0f1a]/50">
-                    <td colSpan={7} className="px-4 py-4">
+                    <td colSpan={8} className="px-4 py-4">
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
