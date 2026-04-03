@@ -20,7 +20,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     plan: account?.plan || '',
     clientName: account?.clientName || '',
     clientContact: account?.clientContact || '',
-    saleDate: account?.saleDate || new Date().toISOString().split('T')[0],
+    saleDate: account?.saleDate || '',
     duration: account?.duration || 1,
     provider: account?.provider || '',
     providerRenewalDate: account?.providerRenewalDate || '',
