@@ -595,13 +595,28 @@ export const getDaysRemaining = (expiryDate: string): number => {
 };
 
 // Helper para calcular fecha de vencimiento
-// 1 mes = 30 días (de 1 de abril a 30 de abril)
+// Mantiene el mismo día del mes (4 de febrero + 1 año = 4 de febrero del próximo año)
+// Si el día no existe en el mes destino (ej: 31 enero → febrero), ajusta al último día válido
 export const calculateExpiryDate = (saleDate: string, duration: number): string => {
-  const date = new Date(saleDate);
-  // duration viene en meses pero cada mes = 30 días
-  const totalDays = duration * 30;
-  date.setDate(date.getDate() + totalDays);
-  return date.toISOString().split('T')[0];
+  const date = new Date(saleDate + 'T00:00:00');
+  const originalDay = date.getDate();
+
+  // Sumar meses
+  let newMonth = date.getMonth() + duration;
+  let newYear = date.getFullYear() + Math.floor(newMonth / 12);
+  newMonth = newMonth % 12;
+
+  // Crear la nueva fecha con el día original
+  const newDate = new Date(newYear, newMonth, originalDay);
+
+  // Si el día se ajustó automáticamente (ej: 31 enero → 28 feb), mantener consistencia
+  // Verificar que no se haya pasado al siguiente mes
+  if (newDate.getMonth() !== newMonth) {
+    // Ajustar al último día del mes destino
+    newDate.setDate(0);
+  }
+
+  return newDate.toISOString().split('T')[0];
 };
 
 // Helper para convertir meses a texto
