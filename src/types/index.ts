@@ -534,7 +534,7 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     icon: 'play-circle',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#E50914',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/ViX_Logo.svg/1280px-ViX_Logo.svg.png',
   },
 ];
 
