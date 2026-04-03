@@ -120,9 +120,32 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     }
   };
 
+  // Función para extraer la duración en meses del nombre del plan
+  const getDurationFromPlan = (plan: string): number => {
+    const planLower = plan.toLowerCase();
+    if (planLower.includes('mensual') || planLower === '1 mes' || planLower === '1mes') {
+      return 1;
+    }
+    if (planLower.includes('3 mes')) {
+      return 3;
+    }
+    if (planLower.includes('6 mes')) {
+      return 6;
+    }
+    if (planLower.includes('12 mes') || planLower.includes('1 año') || planLower.includes('1ano')) {
+      return 12;
+    }
+    // Si no coincide con ningún patrón, devolver 1 por defecto
+    return 1;
+  };
+
   const handlePlanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newPlan = e.target.value;
-    setFormData((prev) => ({ ...prev, plan: newPlan }));
+
+    // Extraer la duración del plan seleccionado
+    const durationFromPlan = getDurationFromPlan(newPlan);
+
+    setFormData((prev) => ({ ...prev, plan: newPlan, duration: durationFromPlan }));
 
     // Si el plan es "Disponible", no hacer nada con perfiles
     if (newPlan === 'Disponible') {
