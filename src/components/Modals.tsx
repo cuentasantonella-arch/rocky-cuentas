@@ -8,6 +8,7 @@ export function ProductManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [productSearch, setProductSearch] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     icon: 'tv',
@@ -108,9 +109,14 @@ export function ProductManager() {
     }
   };
 
+  // Filtrar productos por búsqueda
+  const filteredProducts = state.products.filter(product =>
+    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Gestionar Productos</h2>
           <p className="text-gray-400 mt-1">Agrega, edita o elimina tipos de productos con su logo</p>
@@ -124,19 +130,48 @@ export function ProductManager() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {state.products.map((product) => (
+      {/* Buscador de productos */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Buscar producto..."
+          value={productSearch}
+          onChange={(e) => setProductSearch(e.target.value)}
+          className="w-full px-4 py-3 pl-10 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {productSearch && (
+          <button
+            onClick={() => setProductSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Contador de resultados */}
+      {productSearch && (
+        <p className="text-sm text-gray-400">
+          {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''} encontrado{filteredProducts.length !== 1 ? 's' : ''}
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        {filteredProducts.map((product) => (
           <div
             key={product.id}
             className="bg-[#16213e] rounded-xl overflow-hidden border border-gray-700/50 hover:border-gray-600 transition-all hover:shadow-lg hover:shadow-black/20"
           >
-            {/* Header con imagen */}
-            <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
+            {/* Header con imagen pequena */}
+            <div className="relative h-20 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-contain p-4"
+                  className="w-12 h-12 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -153,64 +188,43 @@ export function ProductManager() {
                 </div>
               )}
               {/* Acciones siempre visibles */}
-              <div className="absolute top-2 right-2 flex items-center gap-1">
+              <div className="absolute top-1 right-1 flex items-center gap-1">
                 <button
                   onClick={() => handleOpenModal(product)}
-                  className="p-2 bg-indigo-600/80 hover:bg-indigo-600 rounded-lg text-white transition-colors shadow-lg"
+                  className="p-1.5 bg-indigo-600/80 hover:bg-indigo-600 rounded text-white transition-colors shadow-lg"
                   title="Editar"
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => handleDelete(product)}
-                  className="p-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white transition-colors shadow-lg"
+                  className="p-1.5 bg-red-500/80 hover:bg-red-500 rounded text-white transition-colors shadow-lg"
                   title="Eliminar"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3 h-3" />
                 </button>
               </div>
             </div>
 
             {/* Contenido */}
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: product.color }}
-                />
-                <h3 className="text-lg font-semibold text-white truncate">{product.name}</h3>
-              </div>
-              <div className="flex flex-wrap gap-1 mb-3">
-                {product.plans.slice(0, 3).map((plan) => (
-                  <span
-                    key={plan}
-                    className="px-2 py-0.5 bg-gray-700/50 text-gray-300 text-xs rounded"
-                  >
-                    {plan}
-                  </span>
-                ))}
-                {product.plans.length > 3 && (
-                  <span className="px-2 py-0.5 bg-gray-700/50 text-gray-400 text-xs rounded">
-                    +{product.plans.length - 3}
-                  </span>
-                )}
-              </div>
+            <div className="p-2">
+              <h3 className="text-sm font-semibold text-white truncate text-center">{product.name}</h3>
               {/* Estadísticas de cuentas */}
               {(() => {
                 const stats = getProductStats(product.name);
                 return (
-                  <div className="flex items-center gap-3 pt-3 border-t border-gray-700/50">
-                    <div className="flex-1 text-center">
-                      <p className="text-lg font-bold text-white">{stats.total}</p>
-                      <p className="text-xs text-gray-500">Total</p>
+                  <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-gray-700/50">
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-white">{stats.total}</p>
+                      <p className="text-[10px] text-gray-500">Total</p>
                     </div>
-                    <div className="flex-1 text-center">
-                      <p className="text-lg font-bold text-emerald-400">{stats.disponibles}</p>
-                      <p className="text-xs text-gray-500">Disponibles</p>
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-emerald-400">{stats.disponibles}</p>
+                      <p className="text-[10px] text-gray-500">Disp</p>
                     </div>
-                    <div className="flex-1 text-center">
-                      <p className="text-lg font-bold text-indigo-400">{stats.vendidas}</p>
-                      <p className="text-xs text-gray-500">Vendidas</p>
+                    <div className="text-center">
+                      <p className="text-xs font-bold text-indigo-400">{stats.vendidas}</p>
+                      <p className="text-[10px] text-gray-500">Vend</p>
                     </div>
                   </div>
                 );

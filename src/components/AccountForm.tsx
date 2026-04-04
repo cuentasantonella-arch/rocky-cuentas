@@ -13,6 +13,9 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   // Solo es edición si existe la cuenta Y tiene un ID real (no vacío)
   const isEditing = !!account && !!account.id;
 
+  // Inicializar perfiles desde la cuenta o vacío
+  const initialProfiles = account?.profiles || [];
+
   const [formData, setFormData] = useState({
     email: account?.email || '',
     password: account?.password || '',
@@ -28,9 +31,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     saleStatus: account?.saleStatus || 'available' as SaleStatus,
   });
 
-  const [profiles, setProfiles] = useState<Profile[]>(
-    account?.profiles || []
-  );
+  const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -53,34 +54,6 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   // Máximo de perfiles permitidos
   const maxProfiles = usesSingleProfile ? 1 : 5;
 
-  // Auto-inicializar perfiles para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+)
-  // Solo se ejecuta UNA VEZ al cargar la cuenta
-  useEffect(() => {
-    if (!account) return; // Solo para edición, no para cuentas nuevas
-
-    // Para productos de 2 pantallas, asegurar que siempre haya 2 perfiles
-    if (usesClients) {
-      const loadedProfiles = account.profiles || [];
-      // Si tiene menos de 2 perfiles, agregar los faltantes
-      if (loadedProfiles.length < 2) {
-        const newProfiles = [...loadedProfiles];
-        for (let i = loadedProfiles.length + 1; i <= 2; i++) {
-          newProfiles.push({ slot: i, clientName: '' });
-        }
-        setProfiles(newProfiles);
-      }
-    }
-  }, []); // Empty dependency array = solo se ejecuta al montar
-
-  // Auto-inicializar perfiles SOLO para Netflix Extra (1 perfil fijo)
-  useEffect(() => {
-    // Solo para Netflix Extra y solo si no hay perfiles todavía
-    if (usesSingleProfile && profiles.length === 0 && !account?.profiles?.length) {
-      // Crear 1 perfil por defecto para Netflix Extra
-      setProfiles([{ slot: 1, clientName: '' }]);
-    }
-  }, [usesSingleProfile]);
-
   // Sincronizar formData cuando cambia la cuenta que se está editando
   useEffect(() => {
     if (account) {
@@ -98,6 +71,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         notes: account.notes || '',
         saleStatus: account.saleStatus || 'available' as SaleStatus,
       });
+
+      // Sincronizar perfiles SOLO al inicio
       setProfiles(account.profiles || []);
 
       // Verificar si la fecha de vencimiento es manual (difiere de la calculada)
@@ -138,17 +113,25 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
-      if (name === 'productType') {
-        updated.plan = '';
-        // Si el nuevo producto es de 2 pantallas, limpiar perfiles
-        if (TWO_SCREEN_PRODUCTS.includes(value)) {
-          setProfiles([]);
-        }
+
+    // Manejar el cambio de tipo de producto de forma especial
+    if (name === 'productType') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        plan: '', // Limpiar el plan cuando cambia el producto
+      }));
+      // Si el nuevo producto es de 2 pantallas, limpiar perfiles
+      if (TWO_SCREEN_PRODUCTS.includes(value)) {
+        setProfiles([]);
       }
-      return updated;
-    });
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -278,6 +261,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     // Si el plan es "Disponible", la cuenta queda en espera
     const isDisponible = formData.plan === 'Disponible';
 
+    // IMPORTANTE: Calcular usesClients en el momento del submit para evitar problemas de stale closures
+    // Usar TWO_SCREEN_PRODUCTS directamente para asegurar que se usa el valor actual
+    const isTwoScreenProduct = TWO_SCREEN_PRODUCTS.includes(formData.productType);
+
     // Si hay perfiles y al menos uno está asignado, guardar ese cliente
     const assignedProfiles = profiles.filter(p => p.clientName.trim());
     const primaryClientName = assignedProfiles.length > 0
@@ -311,6 +298,29 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         ? finalManualExpiry
         : calculateExpiryDate(formData.saleDate, Number(formData.duration)));
 
+    // Determinar qué perfiles guardar
+    // Para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+), guardar TODOS los perfiles
+    // Para productos "Disponible", guardar todos los perfiles
+    // Para otros productos, guardar solo los perfiles asignados
+    let profilesToSave: Profile[];
+    if (isDisponible) {
+      profilesToSave = profiles;
+    } else if (isTwoScreenProduct) {
+      // Para productos de 2 pantallas, mantener todos los perfiles siempre
+      profilesToSave = profiles;
+    } else {
+      // Para otros productos, guardar solo perfiles con nombre de cliente
+      profilesToSave = profiles.filter((p) => p.clientName.trim() !== '');
+    }
+
+    console.log('💾 Guardando cuenta con perfiles:', {
+      totalProfiles: profiles.length,
+      savedProfiles: profilesToSave.length,
+      isDisponible,
+      isTwoScreenProduct,
+      productType: formData.productType
+    });
+
     const accountData = {
       email: formData.email.trim(),
       // Para ChatGPT, guardar contraseña solo si se proporcionó
@@ -329,13 +339,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       providerRenewalDate: formData.providerRenewalDate,
       saleStatus,
       notes: formData.notes.trim() || undefined,
-      // Para productos de 2 pantallas (PrimeVideo, Crunchyroll, Paramount+), guardar TODOS los perfiles
-      // Para otros productos, guardar solo los perfiles asignados
-      profiles: isDisponible
-        ? profiles
-        : (usesClients
-            ? profiles  // Mantener todos los perfiles para productos de 2 pantallas
-            : profiles.filter((p) => p.clientName.trim() !== '')),
+      profiles: profilesToSave,
     };
 
     if (isEditing && account) {
@@ -456,6 +460,27 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Plataforma *
                   </label>
+                  {/* Buscador de productos */}
+                  <input
+                    type="text"
+                    placeholder="Buscar producto..."
+                    value={formData.productType}
+                    onChange={(e) => {
+                      // Buscar coincidencia exacta o parcial
+                      const searchValue = e.target.value.toLowerCase();
+                      const matchingProduct = state.products.find(p =>
+                        p.name.toLowerCase().includes(searchValue)
+                      );
+                      if (matchingProduct) {
+                        setFormData(prev => ({ ...prev, productType: matchingProduct.name, plan: '' }));
+                      } else {
+                        setFormData(prev => ({ ...prev, productType: e.target.value }));
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-2"
+                    style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                  />
+                  {/* Selector de productos */}
                   <select
                     name="productType"
                     value={formData.productType}
@@ -473,6 +498,52 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     ))}
                   </select>
                   {errors.productType && <p className="text-red-500 text-xs mt-1">{errors.productType}</p>}
+                  {/* Selector visual de productos con iconos */}
+                  <div className="mt-3 p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)' }}>
+                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Productos disponibles:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {state.products.map((product) => (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, productType: product.name, plan: '' }));
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all text-sm ${
+                            formData.productType === product.name
+                              ? 'border-indigo-500 bg-indigo-500/10'
+                              : 'border-gray-300 hover:border-indigo-400'
+                          }`}
+                          style={{
+                            borderColor: formData.productType === product.name ? '#6366f1' : undefined,
+                            backgroundColor: formData.productType === product.name ? 'rgba(99, 102, 241, 0.1)' : undefined
+                          }}
+                        >
+                          {product.imageUrl ? (
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-5 h-5 object-contain"
+                              style={{ maxWidth: '20px', maxHeight: '20px' }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className="w-5 h-5 rounded flex items-center justify-center text-white text-xs font-bold"
+                              style={{ backgroundColor: product.color || '#6366f1' }}
+                            >
+                              {product.name.charAt(0)}
+                            </div>
+                          )}
+                          <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {product.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
