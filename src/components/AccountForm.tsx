@@ -281,6 +281,22 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       }
     }
 
+    // GUARDAR AUTOMÁTICAMENTE TODOS LOS CLIENTES DE LOS PERFILES
+    // Recopilar todos los nombres de clientes únicos de los perfiles
+    const allProfileClients = profiles
+      .map(p => p.clientName.trim())
+      .filter(name => name !== '');
+
+    // Agregar cada cliente de perfil si no existe
+    allProfileClients.forEach(clientName => {
+      const clientExists = state.clients.some(
+        c => c.name.toLowerCase() === clientName.toLowerCase()
+      );
+      if (!clientExists) {
+        addClient({ name: clientName });
+      }
+    });
+
     // Determinar el estado de venta
     const hasAssignedProfiles = assignedProfiles.length > 0;
     const saleStatus: SaleStatus = isDisponible

@@ -572,6 +572,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       dispatch({ type: 'SET_STATE', payload });
+
+      // MIGRACIÓN AUTOMÁTICA: Extraer clientes de cuentas existentes
+      // Esto asegura que los clientes de cuentas anteriores se guarden en la sección de clientes
+      setTimeout(() => {
+        migrateClientsFromAccounts();
+      }, 100);
+
       setIsOnline(true);
       setIsInitialSync(false);
       console.log('✅ Datos sincronizados desde Supabase');
@@ -613,6 +620,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading from storage:', error);
+    }
+  };
+
+  // FUNCIÓN DE MIGRACIÓN: Extraer clientes de cuentas existentes
+  // Busca clientes en clientName y en profiles de todas las cuentas
+  const migrateClientsFromAccounts = async () => {
+    try {
+      // Obtener todos los clientes únicos de las cuentas
+      const clientNames = new Set<string>();
+
+      // 1. Extraer del campo clientName de cada cuenta
+      state.accounts.forEach(account => {
+        if (account.clientName && account.clientName.trim() !== '') {
+          clientNames.add(account.clientName.trim());
+        }
+
+        // 2. Extraer de los perfiles de cada cuenta
+        if (account.profiles && Array.isArray(account.profiles)) {
+          account.profiles.forEach(profile => {
+            if (profile.clientName && profile.clientName.trim() !== '') {
+              clientNames.add(profile.clientName.trim());
+            }
+          });
+        }
+      });
+
+      console.log(`🔍 Migración de clientes: encontrados ${clientNames.size} clientes únicos`);
+
+      // Verificar cuáles ya existen y cuáles hay que agregar
+      const existingClientNames = new Set(
+        state.clients.map(c => c.name.toLowerCase())
+      );
+
+      let addedCount = 0;
+      for (const clientName of clientNames) {
+        // Solo agregar si el cliente no existe ya
+        if (!existingClientNames.has(clientName.toLowerCase())) {
+          // Crear el cliente en la base de datos
+          const now = new Date().toISOString();
+          const newClient: Client = {
+            id: generateId(),
+            name: clientName,
+            createdAt: now,
+          };
+
+          // Guardar en Supabase
+          try {
+            const { error } = await supabase
+              .from('clients')
+              .insert({
+                id: newClient.id,
+                name: newClient.name,
+                created_at: newClient.createdAt,
+              });
+
+            if (error) {
+              console.error(`❌ Error guardando cliente ${clientName}:`, error);
+            } else {
+              // Agregar al estado local
+              dispatch({ type: 'ADD_CLIENT', payload: newClient });
+              addedCount++;
+              console.log(`✅ Cliente migrado: ${clientName}`);
+            }
+          } catch (err) {
+            console.error(`❌ Error inserting client ${clientName}:`, err);
+          }
+        }
+      }
+
+      if (addedCount > 0) {
+        console.log(`🎉 Migración completada: ${addedCount} clientes agregados`);
+      } else {
+        console.log('ℹ️ No había clientes nuevos que migrar');
+      }
+    } catch (error) {
+      console.error('❌ Error en migración de clientes:', error);
     }
   };
 
@@ -1154,6 +1237,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const providerName of uniqueProviders) {
       if (providerName && !state.providers.find(p => p.name.toLowerCase() === providerName.toLowerCase())) {
         await addProvider({ name: providerName, productType: '' });
+      }
+    }
+
+    // EXTRAER Y GUARDAR CLIENTES DE LAS CUENTAS IMPORTADAS
+    // Recopilar todos los nombres de clientes únicos
+    const importedClientNames = new Set<string>();
+
+    accountsData.forEach(account => {
+      // Del campo clientName
+      if (account.clientName && account.clientName.trim() !== '') {
+        importedClientNames.add(account.clientName.trim());
+      }
+      // De los perfiles
+      if (account.profiles && Array.isArray(account.profiles)) {
+        account.profiles.forEach(profile => {
+          if (profile.clientName && profile.clientName.trim() !== '') {
+            importedClientNames.add(profile.clientName.trim());
+          }
+        });
+      }
+    });
+
+    // Agregar cada cliente importado si no existe
+    const existingClientNames = new Set(
+      state.clients.map(c => c.name.toLowerCase())
+    );
+
+    for (const clientName of importedClientNames) {
+      if (!existingClientNames.has(clientName.toLowerCase())) {
+        await addClient({ name: clientName });
+        console.log(`✅ Cliente importado: ${clientName}`);
       }
     }
   };
