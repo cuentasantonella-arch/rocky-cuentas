@@ -47,6 +47,7 @@ export interface Account {
   saleStatus: SaleStatus; // 'available' = disponible, 'sold' = vendida
   notes?: string;
   profiles?: Profile[];
+  user?: string; // Campo usuario para Bleezed Player
   createdAt: string;
   updatedAt: string;
 }

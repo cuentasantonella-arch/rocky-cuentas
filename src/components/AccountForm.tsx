@@ -29,6 +29,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     providerRenewalDate: account?.providerRenewalDate || '',
     notes: account?.notes || '',
     saleStatus: account?.saleStatus || 'available' as SaleStatus,
+    user: account?.user || '',
   });
 
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
@@ -70,6 +71,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         providerRenewalDate: account.providerRenewalDate || '',
         notes: account.notes || '',
         saleStatus: account.saleStatus || 'available' as SaleStatus,
+        user: account.user || '',
       });
 
       // Sincronizar perfiles SOLO al inicio
@@ -200,7 +202,15 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email.trim()) newErrors.email = 'El campo es requerido';
+    // Para Bleezed Player, requerir al menos Código o Usuario
+    const isBleezed = formData.productType === 'Bleezed Player';
+    if (isBleezed) {
+      if (!formData.email.trim() && !formData.user.trim()) {
+        newErrors.email = 'Código o Usuario es requerido';
+      }
+    } else {
+      if (!formData.email.trim()) newErrors.email = 'El campo es requerido';
+    }
 
     // Validar que no exista otra cuenta con el mismo email y producto
     // Solo verificar duplicados para productos que usan email (no Bleezed)
@@ -223,7 +233,6 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
     // Para ChatGPT y Bleezed Player, la contraseña es opcional
     const isChatGPT = formData.productType === 'ChatGPT Plus';
-    const isBleezed = formData.productType === 'Bleezed Player';
     if (!isChatGPT && !isBleezed && !formData.password.trim()) {
       newErrors.password = 'La contraseña es requerida';
     }
@@ -364,6 +373,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       saleStatus,
       notes: formData.notes.trim() || undefined,
       profiles: profilesToSave,
+      // Campo usuario para Bleezed Player
+      user: formData.productType === 'Bleezed Player' ? formData.user.trim() : undefined,
     };
 
     if (isEditing && account) {
@@ -418,23 +429,61 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                 Credenciales
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    {formData.productType === 'Bleezed Player' ? 'Código *' : 'Correo *'}
-                  </label>
-                  <input
-                    type={formData.productType === 'Bleezed Player' ? 'text' : 'email'}
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                      errors.email ? 'border-red-500' : ''
-                    }`}
-                    style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
-                    placeholder={formData.productType === 'Bleezed Player' ? 'Código del dispositivo' : 'cuenta@ejemplo.com'}
-                  />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                </div>
+                {formData.productType === 'Bleezed Player' ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Código *
+                      </label>
+                      <input
+                        type="text"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.email ? 'border-red-500' : ''
+                        }`}
+                        style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                        placeholder="Código del dispositivo"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        Usuario *
+                      </label>
+                      <input
+                        type="text"
+                        name="user"
+                        value={formData.user}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.email ? 'border-red-500' : ''
+                        }`}
+                        style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                        placeholder="Usuario del dispositivo"
+                      />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      Correo *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                        errors.email ? 'border-red-500' : ''
+                      }`}
+                      style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                      placeholder="cuenta@ejemplo.com"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                  </div>
+                )}
 
                 {formData.productType !== 'Bleezed Player' && (
                 <div>

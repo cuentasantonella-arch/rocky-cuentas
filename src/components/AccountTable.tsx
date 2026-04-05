@@ -390,7 +390,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
           acc.email.toLowerCase().includes(searchLower) ||
           acc.clientName.toLowerCase().includes(searchLower) ||
           acc.provider.toLowerCase().includes(searchLower) ||
-          acc.productType.toLowerCase().includes(searchLower)
+          acc.productType.toLowerCase().includes(searchLower) ||
+          (acc.user && acc.user.toLowerCase().includes(searchLower))
       );
     }
 
@@ -811,45 +812,94 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div>
-                        <div className="flex items-center gap-1">
-                          <p className="text-white font-medium text-sm">{account.email}</p>
-                          <button
-                            onClick={() => {
-                              copyToClipboard(account.email);
-                              setCopiedEmail(account.id);
-                              setTimeout(() => setCopiedEmail(null), 2000);
-                            }}
-                            className="p-1 hover:bg-white/10 rounded transition-colors"
-                            title="Copiar email"
-                          >
-                            {copiedEmail === account.id ? (
-                              <Check className="w-3 h-3 text-green-400" />
-                            ) : (
-                              <Copy className="w-3 h-3 text-gray-500 hover:text-white" />
+                        {account.productType === 'Bleezed Player' ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <p className="text-white font-medium text-sm">
+                                <span className="text-gray-500">Código:</span> {account.email}
+                              </p>
+                              <button
+                                onClick={() => {
+                                  copyToClipboard(account.email);
+                                  setCopiedEmail(account.id);
+                                  setTimeout(() => setCopiedEmail(null), 2000);
+                                }}
+                                className="p-1 hover:bg-white/10 rounded transition-colors"
+                                title="Copiar código"
+                              >
+                                {copiedEmail === account.id ? (
+                                  <Check className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3 text-gray-500 hover:text-white" />
+                                )}
+                              </button>
+                            </div>
+                            {account.user && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <p className="text-white font-medium text-sm">
+                                  <span className="text-gray-500">Usuario:</span> {account.user}
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    copyToClipboard(account.user);
+                                    setCopiedEmail(account.id);
+                                    setTimeout(() => setCopiedEmail(null), 2000);
+                                  }}
+                                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                                  title="Copiar usuario"
+                                >
+                                  {copiedEmail === account.id ? (
+                                    <Check className="w-3 h-3 text-green-400" />
+                                  ) : (
+                                    <Copy className="w-3 h-3 text-gray-500 hover:text-white" />
+                                  )}
+                                </button>
+                              </div>
                             )}
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-gray-500">
-                            {showPass ? account.password : '••••••••'}
-                          </p>
-                          <button
-                            onClick={() => togglePassword(account.id)}
-                            className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
-                          >
-                            {showPass ? (
-                              <EyeOff className="w-3 h-3" />
-                            ) : (
-                              <Eye className="w-3 h-3" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => copyToClipboard(account.password)}
-                            className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
-                          >
-                            <Copy className="w-3 h-3" />
-                          </button>
-                        </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <p className="text-white font-medium text-sm">{account.email}</p>
+                              <button
+                                onClick={() => {
+                                  copyToClipboard(account.email);
+                                  setCopiedEmail(account.id);
+                                  setTimeout(() => setCopiedEmail(null), 2000);
+                                }}
+                                className="p-1 hover:bg-white/10 rounded transition-colors"
+                                title="Copiar email"
+                              >
+                                {copiedEmail === account.id ? (
+                                  <Check className="w-3 h-3 text-green-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3 text-gray-500 hover:text-white" />
+                                )}
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-gray-500">
+                                {showPass ? account.password : '••••••••'}
+                              </p>
+                              <button
+                                onClick={() => togglePassword(account.id)}
+                                className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                              >
+                                {showPass ? (
+                                  <EyeOff className="w-3 h-3" />
+                                ) : (
+                                  <Eye className="w-3 h-3" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => copyToClipboard(account.password)}
+                                className="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </td>
