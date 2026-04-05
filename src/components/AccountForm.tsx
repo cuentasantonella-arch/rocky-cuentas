@@ -514,34 +514,6 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     ))}
                   </select>
                   {errors.productType && <p className="text-red-500 text-xs mt-1">{errors.productType}</p>}
-                  {/* Selector visual de productos - solo texto */}
-                  <div className="mt-3 p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)' }}>
-                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Productos disponibles:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {state.products.map((product) => (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, productType: product.name, plan: '' }));
-                          }}
-                          className={`px-3 py-1.5 rounded-lg border transition-all text-sm ${
-                            formData.productType === product.name
-                              ? 'border-indigo-500 bg-indigo-500/10'
-                              : 'border-gray-300 hover:border-indigo-400'
-                          }`}
-                          style={{
-                            borderColor: formData.productType === product.name ? '#6366f1' : undefined,
-                            backgroundColor: formData.productType === product.name ? 'rgba(99, 102, 241, 0.1)' : undefined
-                          }}
-                        >
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {product.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 <div>
