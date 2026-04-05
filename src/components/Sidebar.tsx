@@ -70,6 +70,8 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     }
   ).length;
 
+  const totalAccounts = state.accounts.length;
+
   const navItems = [
     { id: 'dashboard' as Page, label: 'Panel de Control', icon: LayoutDashboard },
     { id: 'accounts' as Page, label: 'Cuentas', icon: CreditCard },
@@ -295,19 +297,47 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 }
               }}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <div className="relative">
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {/* Badge con total de cuentas */}
+                {item.id === 'accounts' && totalAccounts > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold rounded-full px-1"
+                    style={{
+                      backgroundColor: 'var(--accent-primary)',
+                      color: 'white',
+                    }}
+                  >
+                    {totalAccounts > 99 ? '99+' : totalAccounts}
+                  </span>
+                )}
+                {/* Badge de alerta (cuentas por vencer) */}
+                {hasAlert && (
+                  <span
+                    className="absolute -top-1 -left-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold rounded-full animate-pulse-slow"
+                    style={{
+                      backgroundColor: 'var(--warning)',
+                      color: 'white',
+                    }}
+                  >
+                    {expiringCount > 9 ? '+' : expiringCount}
+                  </span>
+                )}
+              </div>
               {!collapsed && (
                 <>
                   <span className="flex-1 text-left font-medium">{item.label}</span>
+                  {/* Badge de alerta en texto (cuentas por vencer) */}
                   {hasAlert && (
                     <span
-                      className="flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full animate-pulse-slow"
+                      className="flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full"
                       style={{
-                        backgroundColor: 'var(--warning)',
-                        color: 'white',
+                        backgroundColor: 'var(--warning-bg)',
+                        color: 'var(--warning)',
+                        border: '1px solid var(--warning)',
                       }}
                     >
-                      {expiringCount}
+                      {expiringCount} por vencer
                     </span>
                   )}
                 </>
