@@ -200,26 +200,31 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.email.trim()) newErrors.email = 'El correo es requerido';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Correo inválido';
-    }
+    if (!formData.email.trim()) newErrors.email = 'El campo es requerido';
 
     // Validar que no exista otra cuenta con el mismo email y producto
-    const emailNormalized = formData.email.trim().toLowerCase();
-    const existingAccount = state.accounts.find(
-      acc =>
-        acc.email.toLowerCase() === emailNormalized &&
-        acc.productType === formData.productType &&
-        acc.id !== account?.id // Ignorar la cuenta que se está editando
-    );
-    if (existingAccount) {
-      newErrors.email = `Ya existe una cuenta con este email en ${formData.productType}`;
+    // Solo verificar duplicados para productos que usan email (no Bleezed)
+    if (formData.productType !== 'Bleezed Player') {
+      const emailNormalized = formData.email.trim().toLowerCase();
+      const existingAccount = state.accounts.find(
+        acc =>
+          acc.email.toLowerCase() === emailNormalized &&
+          acc.productType === formData.productType &&
+          acc.id !== account?.id
+      );
+      if (existingAccount) {
+        newErrors.email = `Ya existe una cuenta con este email en ${formData.productType}`;
+      }
+      // Validar formato de email solo si no es Bleezed
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = 'Correo inválido';
+      }
     }
 
-    // Para ChatGPT, la contraseña es opcional porque se usa el email del cliente para activar
+    // Para ChatGPT y Bleezed Player, la contraseña es opcional
     const isChatGPT = formData.productType === 'ChatGPT Plus';
-    if (!isChatGPT && !formData.password.trim()) {
+    const isBleezed = formData.productType === 'Bleezed Player';
+    if (!isChatGPT && !isBleezed && !formData.password.trim()) {
       newErrors.password = 'La contraseña es requerida';
     }
     if (!formData.productType) newErrors.productType = 'Selecciona un producto';
@@ -415,10 +420,10 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                    Correo *
+                    {formData.productType === 'Bleezed Player' ? 'Código *' : 'Correo *'}
                   </label>
                   <input
-                    type="email"
+                    type={formData.productType === 'Bleezed Player' ? 'text' : 'email'}
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
@@ -426,11 +431,12 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                       errors.email ? 'border-red-500' : ''
                     }`}
                     style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
-                    placeholder="cuenta@ejemplo.com"
+                    placeholder={formData.productType === 'Bleezed Player' ? 'Código del dispositivo' : 'cuenta@ejemplo.com'}
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
 
+                {formData.productType !== 'Bleezed Player' && (
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Contraseña {formData.productType !== 'ChatGPT Plus' && '*'}
@@ -466,6 +472,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     </p>
                   )}
                 </div>
+                )}
               </div>
             </div>
 

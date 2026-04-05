@@ -662,12 +662,12 @@ export const formatDate = (dateString: string): string => {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return 'N/A';
 
-  // Formato: 01-Jul-2026
+  // Formato: 01 Jul 2026
   const day = date.getDate().toString().padStart(2, '0');
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const month = months[date.getMonth()];
   const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  return `${day} ${month} ${year}`;
 };
 
 // Helper para generar ID único
