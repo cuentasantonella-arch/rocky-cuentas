@@ -200,7 +200,7 @@ Quedamos atentos para ayudarte y resolver cualquier consulta. 😊`,
     id: '1',
     name: 'Netflix',
     icon: 'tv',
-    plans: ['Completo 4K', '2 Pantallas', '5 Perfiles'],
+    plans: ['Completo 4K', '2 Pantallas', '5 Perfiles', '4 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
     instructive: `✅ GARANTÍA Y USO DE NETFLIX 🎬🔐
@@ -396,7 +396,7 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     id: '14',
     name: 'Netflix Extra',
     icon: 'tv',
-    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
     instructive: `🔹📺✨ NETFLIX EXTRA - 1 PIN

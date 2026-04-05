@@ -146,6 +146,9 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     if (planLower.includes('3 mes')) {
       return 3;
     }
+    if (planLower.includes('4 mes')) {
+      return 4;
+    }
     if (planLower.includes('6 mes')) {
       return 6;
     }
