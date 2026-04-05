@@ -159,30 +159,30 @@ export function ProductManager() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
         {filteredProducts.map((product) => (
           <div
             key={product.id}
             className="bg-[#16213e] rounded-xl overflow-hidden border border-gray-700/50 hover:border-gray-600 transition-all hover:shadow-lg hover:shadow-black/20"
           >
-            {/* Header con imagen pequena */}
-            <div className="relative h-20 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
+            {/* Header con imagen mas grande */}
+            <div className="relative h-28 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center overflow-hidden">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-12 h-12 object-contain"
+                  className="w-20 h-20 object-contain"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
               ) : (
                 <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center"
+                  className="w-20 h-20 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: product.color + '30' }}
                 >
                   <div
-                    className="w-10 h-10 rounded-lg"
+                    className="w-12 h-12 rounded-lg"
                     style={{ backgroundColor: product.color }}
                   />
                 </div>
@@ -207,23 +207,23 @@ export function ProductManager() {
             </div>
 
             {/* Contenido */}
-            <div className="p-2">
-              <h3 className="text-sm font-semibold text-white truncate text-center">{product.name}</h3>
+            <div className="p-3">
+              <h3 className="text-base font-bold text-white truncate text-center leading-tight">{product.name}</h3>
               {/* Estadísticas de cuentas */}
               {(() => {
                 const stats = getProductStats(product.name);
                 return (
-                  <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-gray-700/50">
+                  <div className="flex items-center justify-center gap-3 mt-3 pt-2 border-t border-gray-700/50">
                     <div className="text-center">
-                      <p className="text-xs font-bold text-white">{stats.total}</p>
+                      <p className="text-sm font-bold text-white">{stats.total}</p>
                       <p className="text-[10px] text-gray-500">Total</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs font-bold text-emerald-400">{stats.disponibles}</p>
+                      <p className="text-sm font-bold text-emerald-400">{stats.disponibles}</p>
                       <p className="text-[10px] text-gray-500">Disp</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs font-bold text-indigo-400">{stats.vendidas}</p>
+                      <p className="text-sm font-bold text-indigo-400">{stats.vendidas}</p>
                       <p className="text-[10px] text-gray-500">Vend</p>
                     </div>
                   </div>
