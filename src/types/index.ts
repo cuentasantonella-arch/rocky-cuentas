@@ -330,11 +330,19 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
 💬 Si tienes cualquier duda o problema, envíanos un mensaje. ¡Con gusto te ayudaremos!`,
   },
   {
-    id: '6',
-    name: 'Disney+',
+    id: '6a',
+    name: 'Disney Standar',
     icon: 'castle',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#113CCF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png',
+  },
+  {
+    id: '6b',
+    name: 'Disney Premium',
+    icon: 'castle',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#1E90FF',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Disney_plus_icon.png',
   },
   {
@@ -346,11 +354,19 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png',
   },
   {
-    id: '8',
-    name: 'HBO Max',
+    id: '8a',
+    name: 'HBO Max Standar',
     icon: 'tv-2',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#B535F6',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
+  },
+  {
+    id: '8b',
+    name: 'HBO Max Con TNT',
+    icon: 'tv-2',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#FF6B35',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/HBO_Max_%282025%29.svg/1280px-HBO_Max_%282025%29.svg.png',
   },
   {
@@ -557,7 +573,7 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
 
 // Productos que usan 1 solo perfil con PIN (ej: Netflix Extra)
-export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra'];
+export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],
