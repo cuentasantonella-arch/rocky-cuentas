@@ -514,7 +514,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     ))}
                   </select>
                   {errors.productType && <p className="text-red-500 text-xs mt-1">{errors.productType}</p>}
-                  {/* Selector visual de productos con iconos */}
+                  {/* Selector visual de productos - solo texto */}
                   <div className="mt-3 p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)' }}>
                     <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Productos disponibles:</p>
                     <div className="flex flex-wrap gap-2">
@@ -525,7 +525,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                           onClick={() => {
                             setFormData(prev => ({ ...prev, productType: product.name, plan: '' }));
                           }}
-                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition-all text-sm ${
+                          className={`px-3 py-1.5 rounded-lg border transition-all text-sm ${
                             formData.productType === product.name
                               ? 'border-indigo-500 bg-indigo-500/10'
                               : 'border-gray-300 hover:border-indigo-400'
@@ -535,25 +535,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                             backgroundColor: formData.productType === product.name ? 'rgba(99, 102, 241, 0.1)' : undefined
                           }}
                         >
-                          {product.imageUrl ? (
-                            <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="w-5 h-5 object-contain"
-                              style={{ maxWidth: '20px', maxHeight: '20px' }}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div
-                              className="w-5 h-5 rounded flex items-center justify-center text-white text-xs font-bold"
-                              style={{ backgroundColor: product.color || '#6366f1' }}
-                            >
-                              {product.name.charAt(0)}
-                            </div>
-                          )}
-                          <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                             {product.name}
                           </span>
                         </button>
