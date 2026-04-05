@@ -1194,7 +1194,7 @@ Rocky Cuentas - Gracias por su compra`;
                             updateAccount({
                               ...account,
                               expiryDate: today,
-                              saleStatus: 'available' as SaleStatus,
+                              saleStatus: 'fallen',
                               profiles: account.profiles?.map(p => ({ ...p, sold: false })),
                             });
                             logActivity(
