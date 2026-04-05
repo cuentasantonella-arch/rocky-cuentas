@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   Users,
   ChevronRight,
+  ChevronLeft,
   Files,
   Share2,
   Check,
@@ -25,6 +26,7 @@ import {
   CheckSquare,
   X,
   Calendar,
+  Menu,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
@@ -59,6 +61,10 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [selectedAccounts, setSelectedAccounts] = useState<Set<string>>(new Set());
   // Estado para pestañas por producto
   const [selectedProductTab, setSelectedProductTab] = useState<string>('all');
+  // Estado para mostrar/ocultar filtros en móvil
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  // Estado para cuenta expandida en móvil
+  const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
 
   // Limpiar filtro de producto cuando se cambia de pestaña
   const handleTabChange = (productName: string) => {
@@ -603,25 +609,37 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
       {/* Filtros */}
       {showFilters && (
-        <div className="p-4 border-b border-gray-700/50">
-          <div className="flex flex-col md:flex-row gap-3">
+        <div className="p-3 md:p-4 border-b border-gray-700/50">
+          {/* Barra de búsqueda siempre visible */}
+          <div className="flex gap-2 mb-2 md:mb-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
                 type="text"
-                placeholder="Buscar por email, cliente, proveedor..."
+                placeholder="Buscar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
               />
             </div>
+            {/* Botón de filtros para móvil */}
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="md:hidden px-3 py-2 bg-[#0f0f1a] border border-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-xs">Filtros</span>
+            </button>
+          </div>
 
+          {/* Filtros - colapsables en móvil */}
+          <div className={`md:flex md:flex-row gap-2 ${showMobileFilters ? 'flex flex-col' : 'hidden md:flex'}`}>
             <select
               value={filterProduct}
               onChange={(e) => setFilterProduct(e.target.value)}
-              className="px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             >
-              <option value="">Todos los productos</option>
+              <option value="">Producto</option>
               {state.products.map((p) => (
                 <option key={p.id} value={p.name}>
                   {p.name}
@@ -632,9 +650,9 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
             <select
               value={filterProvider}
               onChange={(e) => setFilterProvider(e.target.value)}
-              className="px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             >
-              <option value="">Todos los proveedores</option>
+              <option value="">Proveedor</option>
               {providersList.map((provider) => (
                 <option key={provider} value={provider}>
                   {provider}
@@ -645,9 +663,9 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as AccountStatus | '')}
-              className="px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             >
-              <option value="">Todos los estados</option>
+              <option value="">Estado</option>
               <option value="active">Activa</option>
               <option value="expiring">Por Vencer</option>
               <option value="critical">Crítico</option>
@@ -657,9 +675,9 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
             <select
               value={filterSale}
               onChange={(e) => setFilterSale(e.target.value as SaleStatus | '')}
-              className="px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             >
-              <option value="">Todas</option>
+              <option value="">Venta</option>
               <option value="available">Disponible</option>
               <option value="sold">Vendida</option>
             </select>

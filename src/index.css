@@ -273,3 +273,153 @@ input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 0.5rem;
 }
+
+/* ==================== RESPONSIVE MOBILE ==================== */
+
+/* Pantallas pequeñas (menos de 640px) */
+@media (max-width: 639px) {
+  /* Reducir padding general */
+  body {
+    font-size: 14px;
+  }
+
+  /* Tarjetas más compactas */
+  .rounded-xl, .rounded-2xl {
+    border-radius: 0.75rem;
+  }
+
+  /* Formularios más compactos */
+  .p-6 {
+    padding: 1rem;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+
+  /* Botones más grandes para touch */
+  button, .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Inputs más grandes para touch */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px !important; /* Evita zoom en iOS */
+  }
+
+  /* Tablas responsivas */
+  .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  table th, table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* Modal fullscreen en móvil */
+  .fixed.inset-0 {
+    padding: 0;
+  }
+
+  .fixed.inset-0 > div {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  /* Sidebar colapsable en móvil */
+  .sidebar {
+    position: fixed;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Cards de estadísticas más compactas */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+
+  /* Filtros en columna en móvil */
+  .filters-container {
+    flex-direction: column;
+  }
+
+  .filters-container > * {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Tabs de productos más compactos */
+  .product-tabs button {
+    padding: 0.5rem;
+  }
+
+  .product-tabs button span:last-child {
+    display: none;
+  }
+
+  /* Menú móvil */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Grid de cuentas */
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Pantallas medianas (640px - 1024px) */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Ocultar elementos en móvil si es necesario */
+@media (max-width: 639px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Tablet y Desktop */
+@media (min-width: 640px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Touch-friendly hover states */
+@media (hover: none) {
+  button:active,
+  .btn:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* Safe area para móviles con notch */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

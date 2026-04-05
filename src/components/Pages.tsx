@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Plus, Upload, RefreshCw, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { Plus, Upload, RefreshCw, Trash2, Download, FileSpreadsheet, Bell, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account } from '../types';
+import { Account, getAccountStatus } from '../types';
 import { AccountForm } from './AccountForm';
 import { AccountTable } from './AccountTable';
 import { StatsCards, AlertList } from './StatsCards';
@@ -16,6 +16,12 @@ type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'provider
 export function Dashboard() {
   const { state } = useApp();
 
+  // Calcular cuentas por vencer
+  const expiringAccounts = state.accounts.filter((acc) => {
+    const status = getAccountStatus(acc.expiryDate, state.settings.alarmDays);
+    return status === 'expiring' || status === 'critical' || status === 'expired';
+  }).length;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -27,6 +33,34 @@ export function Dashboard() {
           Resumen del estado de tus cuentas streaming
         </p>
       </div>
+
+      {/* Alerta superior de cuentas por vencer */}
+      {expiringAccounts > 0 && (
+        <div
+          className="rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:opacity-90 transition-opacity border-l-4 border-amber-500"
+          style={{
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderColor: 'var(--warning)',
+          }}
+          onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'accounts' }))}
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="font-medium text-amber-400">
+                {expiringAccounts} cuenta{expiringAccounts !== 1 ? 's' : ''} por vencer
+              </p>
+              <p className="text-sm text-gray-400">Click para ver todas</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-amber-400">
+            <span className="text-sm font-medium">Ver alertas</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+      )}
 
       {/* Sync Diagnostics */}
       <SyncDiagnostics />
