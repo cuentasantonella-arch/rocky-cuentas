@@ -529,11 +529,11 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
   },
   {
     id: '21',
-    name: 'Bleezed Player',
+    name: 'Blessed Player',
     icon: 'film',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#FF6B35',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Crunchyroll_Logo.png/1280px-Bleezed_Logo.png',
+    imageUrl: '/images/blessed-player-logo.png',
   },
   {
     id: '22',

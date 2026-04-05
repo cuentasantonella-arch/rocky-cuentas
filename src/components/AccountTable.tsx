@@ -812,7 +812,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div>
-                        {account.productType === 'Bleezed Player' ? (
+                        {account.productType === 'Blessed Player' ? (
                           <>
                             <div className="flex items-center gap-1">
                               <p className="text-white font-medium text-sm">
