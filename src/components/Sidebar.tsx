@@ -66,7 +66,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const expiringCount = state.accounts.filter(
     (acc) => {
       const status = getAccountStatus(acc.expiryDate, state.settings.alarmDays);
-      return status === 'expiring' || status === 'critical';
+      return status === 'expiring' || status === 'critical' || status === 'expired';
     }
   ).length;
 
@@ -327,7 +327,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
               {!collapsed && (
                 <>
                   <span className="flex-1 text-left font-medium">{item.label}</span>
-                  {/* Badge de alerta en texto (cuentas por vencer) */}
+                  {/* Badge de alerta en texto (cuentas por vencer o vencidas) */}
                   {hasAlert && (
                     <span
                       className="flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full"
@@ -337,7 +337,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                         border: '1px solid var(--warning)',
                       }}
                     >
-                      {expiringCount} por vencer
+                      {expiringCount} alertas
                     </span>
                   )}
                 </>
@@ -364,8 +364,11 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 className="text-sm font-medium"
                 style={{ color: 'var(--warning)' }}
               >
-                {expiringCount} {expiringCount === 1 ? 'cuenta' : 'cuentas'} por vencer
+                {expiringCount} alertas
               </span>
+            </div>
+            <div className="text-xs" style={{ color: 'var(--warning)' }}>
+              <span>por vencer + vencidas</span>
             </div>
             <button
               onClick={() => onNavigate('accounts')}

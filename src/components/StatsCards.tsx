@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   RefreshCw,
   CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getAccountStatus, getDaysRemaining } from '../types';
@@ -60,6 +61,13 @@ export function StatsCards({ accounts }: StatsCardsProps) {
       bgColor: 'bg-indigo-500/10',
     },
     {
+      title: 'Cuentas Vencidas',
+      value: stats.expired,
+      icon: XCircle,
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10',
+    },
+    {
       title: 'Por Vencer',
       value: stats.expiring,
       icon: AlertTriangle,
@@ -72,13 +80,6 @@ export function StatsCards({ accounts }: StatsCardsProps) {
       icon: RefreshCw,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/10',
-    },
-    {
-      title: 'Cuentas Activas',
-      value: stats.active,
-      icon: CheckCircle,
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10',
     },
   ];
 
