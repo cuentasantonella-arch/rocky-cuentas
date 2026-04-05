@@ -6,10 +6,11 @@ import { SettingsPanel } from './components/Settings';
 import { Login } from './components/Login';
 import { ActivityLog } from './components/ActivityLog';
 import { Instructivos } from './components/Instructivos';
+import { Notes } from './components/Notes';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes';
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -65,6 +66,8 @@ function App() {
         return <ActivityLog />;
       case 'instructivos':
         return <Instructivos />;
+      case 'notes':
+        return <Notes />;
       default:
         return <Dashboard />;
     }

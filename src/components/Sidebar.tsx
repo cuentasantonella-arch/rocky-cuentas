@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   LayoutDashboard,
   CreditCard,
@@ -24,13 +24,15 @@ import {
   WifiOff,
   Check,
   AlertCircle,
+  PackageCheck,
+  StickyNote,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getAccountStatus } from '../types';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes';
 
 interface SidebarProps {
   currentPage: Page;
@@ -72,6 +74,20 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
   const totalAccounts = state.accounts.length;
 
+  // Calcular productos con poco stock (2 o menos cuentas disponibles)
+  const lowStockProducts = useMemo(() => {
+    const productCounts = state.products.map(product => {
+      const count = state.accounts.filter(acc =>
+        acc.productType === product.name &&
+        (acc.saleStatus === 'available' || acc.saleStatus === 'fallen')
+      ).length;
+      return { product, count };
+    });
+    return productCounts.filter(p => p.count <= 2 && p.count > 0);
+  }, [state.accounts, state.products]);
+
+  const lowStockCount = lowStockProducts.length;
+
   const navItems = [
     { id: 'dashboard' as Page, label: 'Panel de Control', icon: LayoutDashboard },
     { id: 'accounts' as Page, label: 'Cuentas', icon: CreditCard },
@@ -79,6 +95,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     { id: 'clients' as Page, label: 'Clientes', icon: UserCircle },
     { id: 'products' as Page, label: 'Productos', icon: Package },
     { id: 'providers' as Page, label: 'Proveedores', icon: Users },
+    { id: 'notes' as Page, label: 'Notas', icon: StickyNote },
     { id: 'instructivos' as Page, label: 'Instructivos', icon: BookOpen },
     { id: 'activity' as Page, label: 'Historial', icon: History, adminOnly: true },
     { id: 'settings' as Page, label: 'Configuración', icon: Settings },
@@ -379,6 +396,54 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
             >
               Ver alertas →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Alert Banner - Productos con poco stock */}
+      {!collapsed && lowStockCount > 0 && (
+        <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+          <div
+            className="p-3 rounded-lg"
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderColor: '#EF4444',
+              borderWidth: '1px',
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <PackageCheck className="w-4 h-4 text-red-400" />
+              <span
+                className="text-sm font-medium"
+                style={{ color: '#EF4444' }}
+              >
+                {lowStockCount} producto{lowStockCount !== 1 ? 's' : ''} bajo stock
+              </span>
+            </div>
+            <div className="text-xs" style={{ color: '#F87171' }}>
+              <span>Máximo 2 cuentas disponibles</span>
+            </div>
+            <div className="mt-2 space-y-1">
+              {lowStockProducts.slice(0, 3).map(({ product, count }) => (
+                <div key={product.id} className="flex items-center justify-between text-xs">
+                  <span style={{ color: '#F87171' }}>{product.name}</span>
+                  <span
+                    className="font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: count === 1 ? '#EF4444' : count === 2 ? '#F59E0B' : '#EF4444',
+                      color: 'white',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </div>
+              ))}
+              {lowStockProducts.length > 3 && (
+                <span className="text-xs" style={{ color: '#F87171' }}>
+                  +{lowStockProducts.length - 3} más
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}

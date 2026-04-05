@@ -327,29 +327,29 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     const durationText = account.duration === 12 ? '1 año' : (account.duration === 1 ? '30 días' : `${account.duration} meses`);
     const profileLabel = account.plan.includes('Pantalla') ? 'Pantalla' : 'Perfil';
 
-    let message = `🎬 *CUENTA ${account.productType.toUpperCase()}*\n\n`;
-    message += `📧 *Correo:* ${account.email}\n`;
-    message += `🔐 *Contraseña:* ${account.password}\n\n`;
-    message += `👤 *${profileLabel}:* ${profile.clientName}\n`;
+    let message = `🎬 CUENTA ${account.productType.toUpperCase()}\n\n`;
+    message += `📧 Correo: ${account.email}\n`;
+    message += `🔐 Contraseña: ${account.password}\n\n`;
+    message += `👤 ${profileLabel}: ${profile.clientName}\n`;
 
     if (profile.pin) {
-      message += `🔢 *PIN:* ${profile.pin}\n`;
+      message += `🔢 PIN: ${profile.pin}\n`;
     }
 
-    message += `\n📅 *Inicio:* ${formatDate(account.saleDate)}\n`;
-    message += `⏰ *Vence:* ${formatDate(account.expiryDate)}\n`;
-    message += `📆 *Duración:* ${durationText}\n\n`;
+    message += `\n📅 Inicio: ${formatDate(account.saleDate)}\n`;
+    message += `⏰ Vence: ${formatDate(account.expiryDate)}\n`;
+    message += `📆 Duración: ${durationText}\n\n`;
 
     if (provider) {
-      message += `🏪 *Proveedor:* ${provider.name}\n`;
+      message += `🏪 Proveedor: ${provider.name}\n`;
       if (provider.telegramUsername) {
-        message += `💬 *Telegram:* @${provider.telegramUsername}\n`;
+        message += `💬 Telegram: @${provider.telegramUsername}\n`;
       }
     }
 
-    message += `\n⚠️ *No cambiar datos de la cuenta*\n`;
-    message += `🚫 *No compartir con terceros*\n\n`;
-    message += `_Enviado desde Rocky Cuentas_`;
+    message += `\n⚠️ No cambiar datos de la cuenta\n`;
+    message += `🚫 No compartir con terceros\n\n`;
+    message += `Enviado desde Rocky Cuentas`;
 
     return message;
   };
@@ -961,6 +961,26 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                       {/* Indicador de venta y botón de perfiles */}
                       {hasProfiles && (
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          {/* Indicador de perfiles con colores claros */}
+                          <div className="flex items-center gap-1">
+                            {/* Círculos de estado de cada perfil */}
+                            {account.profiles?.map((profile, idx) => (
+                              <div
+                                key={idx}
+                                className={`w-3 h-3 rounded-full border-2 ${
+                                  profile.sold
+                                    ? 'bg-green-500 border-green-400'
+                                    : 'bg-transparent border-gray-500'
+                                }`}
+                                title={
+                                  profile.sold
+                                    ? `${profile.clientName || 'Perfil ' + profile.slot} - Vendido`
+                                    : 'Disponible para vender'
+                                }
+                              />
+                            ))}
+                          </div>
+                          {/* Texto del estado */}
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                               isFullySold
@@ -973,17 +993,17 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                             {isFullySold ? (
                               <>
                                 <ShoppingCart className="w-3 h-3" />
-                                Vendida
+                                Cuenta Vendida
                               </>
                             ) : hasPendingProfiles ? (
                               <>
                                 <AlertTriangle className="w-3 h-3" />
-                                {totalProfiles - profilesWithClient} perfil{totalProfiles - profilesWithClient > 1 ? 'es' : ''} pendiente{totalProfiles - profilesWithClient > 1 ? 's' : ''} por vender
+                                {profilesSold}/{totalProfiles} vendidos
                               </>
                             ) : (
                               <>
                                 <Users className="w-3 h-3" />
-                                {profilesSold}/{totalProfiles}
+                                {profilesSold}/{totalProfiles} disponibles
                               </>
                             )}
                           </span>
@@ -1000,17 +1020,17 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
                       {!hasProfiles && account.clientName && (
                         <button
                           onClick={() => {
-                            const message = `🎬 *CUENTA ${account.productType.toUpperCase()}*
+                            const message = `🎬 CUENTA ${account.productType.toUpperCase()}
 
-📧 *Correo:* ${account.email}
-🔐 *Contraseña:* ${account.password}
+📧 Correo: ${account.email}
+🔐 Contraseña: ${account.password}
 
-👋 *Cliente:* ${account.clientName}
-📅 *Fecha de inicio:* ${formatDate(account.saleDate)}
-⏰ *Duración:* ${account.duration} mes(es)
-📆 *Vence:* ${formatDate(account.expiryDate)}
+👋 Cliente: ${account.clientName}
+📅 Fecha de inicio: ${formatDate(account.saleDate)}
+⏰ Duración: ${account.duration} mes(es)
+📆 Vence: ${formatDate(account.expiryDate)}
 
-_Rocky Cuentas - Gracias por su compra_`;
+Rocky Cuentas - Gracias por su compra`;
                             navigator.clipboard.writeText(message);
                             alert('¡Mensaje copiado! Puedes pegarlo en WhatsApp, Telegram o SMS.');
                           }}
@@ -1280,20 +1300,20 @@ _Rocky Cuentas - Gracias por su compra_`;
                               const expiryDate = account.expiryDate ? formatDate(account.expiryDate) : 'N/A';
                               const duration = account.duration ? `${account.duration} mes(es)` : 'N/A';
 
-                              return `🎬 *CUENTA ${account.productType.toUpperCase()}*
+                              return `🎬 CUENTA ${account.productType.toUpperCase()}
 
-📧 *Correo:* ${account.email}
-🔐 *Contraseña:* ${account.password}
+📧 Correo: ${account.email}
+🔐 Contraseña: ${account.password}
 
-👤 *${profileLabel}:* ${profile.slot}
-👋 *Cliente:* ${profile.clientName || 'N/A'}
-🔢 *PIN:* ${profile.pin || 'Sin PIN'}
+👤 ${profileLabel}: ${profile.slot}
+👋 Cliente: ${profile.clientName || 'N/A'}
+🔢 PIN: ${profile.pin || 'Sin PIN'}
 
-📅 *Fecha de inicio:* ${startDate}
-⏰ *Duración:* ${duration}
-📆 *Vence:* ${expiryDate}
+📅 Fecha de inicio: ${startDate}
+⏰ Duración: ${duration}
+📆 Vence: ${expiryDate}
 
-_Rocky Cuentas - Gracias por su compra_`;
+Rocky Cuentas - Gracias por su compra`;
                             };
 
                             const handleCopyMessage = () => {

@@ -9,6 +9,7 @@ import {
   ActivityLogEntry,
   ActivityType,
   Instructive,
+  Note,
   DEFAULT_PRODUCTS,
   DEFAULT_SETTINGS,
   DEFAULT_INSTRUCTIVES,
@@ -26,6 +27,7 @@ const STORAGE_KEYS = {
   settings: 'rocky_settings',
   activityLog: 'rocky_activity_log',
   instructives: 'rocky_instructives',
+  notes: 'rocky_notes',
 };
 
 // Función helper para normalizar fechas antes de guardar en Supabase
@@ -47,6 +49,7 @@ const initialState: AppState = {
   settings: DEFAULT_SETTINGS,
   activityLog: [],
   instructives: DEFAULT_INSTRUCTIVES,
+  notes: [],
 };
 
 // Tipos de acciones
@@ -72,7 +75,10 @@ type Action =
   | { type: 'CLEAR_ACTIVITY_LOG' }
   | { type: 'ADD_INSTRUCTIVE'; payload: Instructive }
   | { type: 'UPDATE_INSTRUCTIVE'; payload: Instructive }
-  | { type: 'DELETE_INSTRUCTIVE'; payload: string };
+  | { type: 'DELETE_INSTRUCTIVE'; payload: string }
+  | { type: 'ADD_NOTE'; payload: Note }
+  | { type: 'UPDATE_NOTE'; payload: Note }
+  | { type: 'DELETE_NOTE'; payload: string };
 
 // Reducer
 function appReducer(state: AppState, action: Action): AppState {
@@ -164,6 +170,20 @@ function appReducer(state: AppState, action: Action): AppState {
         ...state,
         instructives: state.instructives.filter((i) => i.id !== action.payload),
       };
+    case 'ADD_NOTE':
+      return { ...state, notes: [action.payload, ...state.notes] };
+    case 'UPDATE_NOTE':
+      return {
+        ...state,
+        notes: state.notes.map((n) =>
+          n.id === action.payload.id ? action.payload : n
+        ),
+      };
+    case 'DELETE_NOTE':
+      return {
+        ...state,
+        notes: state.notes.filter((n) => n.id !== action.payload),
+      };
     default:
       return state;
   }
@@ -195,6 +215,9 @@ interface AppContextType {
   addInstructive: (instructive: Omit<Instructive, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateInstructive: (instructive: Instructive) => Promise<void>;
   deleteInstructive: (id: string) => Promise<void>;
+  addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateNote: (note: Note) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
   recalculateAllExpiryDates: () => Promise<number>;
 }
@@ -571,6 +594,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Cargar notas desde Supabase
+      const { data: notes, error: notesError } = await supabase
+        .from('notes')
+        .select('*')
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (notesError) {
+        console.error('❌ Error cargando notas:', notesError);
+      }
+
+      if (notes && notes.length > 0) {
+        payload.notes = notes.map(n => ({
+          id: n.id,
+          title: n.title,
+          content: n.content,
+          color: n.color || '#fef08a',
+          isPinned: n.is_pinned || false,
+          createdAt: n.created_at,
+          updatedAt: n.updated_at,
+        }));
+        console.log('✅ Notas cargadas desde Supabase:', payload.notes.length);
+      }
+
       dispatch({ type: 'SET_STATE', payload });
 
       // MIGRACIÓN AUTOMÁTICA: Extraer clientes de cuentas existentes
@@ -615,6 +662,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (settings) payload.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(settings) };
       if (activityLog) payload.activityLog = JSON.parse(activityLog);
       if (instructives) payload.instructives = JSON.parse(instructives);
+      const notes = localStorage.getItem(STORAGE_KEYS.notes);
+      if (notes) payload.notes = JSON.parse(notes);
       else payload.instructives = DEFAULT_INSTRUCTIVES;
 
       if (Object.keys(payload).length > 0) {
@@ -728,6 +777,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
         localStorage.setItem(STORAGE_KEYS.activityLog, JSON.stringify(state.activityLog));
         localStorage.setItem(STORAGE_KEYS.instructives, JSON.stringify(state.instructives));
+        localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(state.notes));
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
@@ -963,6 +1013,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .subscribe((status) => handleChannelSubscribe('settings', status));
 
     channels.push(settingsChannel);
+
+    // Suscripción para notas
+    const notesChannel = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+        },
+        (payload) => {
+          console.log('📝 Cambio en notas:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newNote = {
+              id: payload.new.id,
+              title: payload.new.title,
+              content: payload.new.content,
+              color: payload.new.color || '#fef08a',
+              isPinned: payload.new.is_pinned || false,
+              createdAt: payload.new.created_at,
+              updatedAt: payload.new.updated_at,
+            };
+            dispatch({ type: 'ADD_NOTE', payload: newNote });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedNote = {
+              id: payload.new.id,
+              title: payload.new.title,
+              content: payload.new.content,
+              color: payload.new.color || '#fef08a',
+              isPinned: payload.new.is_pinned || false,
+              createdAt: payload.new.created_at,
+              updatedAt: payload.new.updated_at,
+            };
+            dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
+          } else if (payload.eventType === 'DELETE') {
+            dispatch({ type: 'DELETE_NOTE', payload: payload.old.id });
+          }
+        }
+      )
+      .subscribe((status) => handleChannelSubscribe('notes', status));
+
+    channels.push(notesChannel);
 
     // Cleanup
     return () => {
@@ -1560,6 +1653,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'DELETE_INSTRUCTIVE', payload: id });
   };
 
+  // ========== FUNCIONES DE NOTAS ==========
+  const addNote = async (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newNote: Note = {
+      ...noteData,
+      id: generateId(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      await supabase.from('notes').upsert({
+        id: newNote.id,
+        title: newNote.title,
+        content: newNote.content,
+        color: newNote.color,
+        is_pinned: newNote.isPinned,
+        created_at: newNote.createdAt,
+        updated_at: newNote.updatedAt,
+      });
+      dispatch({ type: 'ADD_NOTE', payload: newNote });
+    } catch (err) {
+      console.error('Error guardando nota:', err);
+    }
+  };
+
+  const updateNote = async (note: Note) => {
+    const updated = { ...note, updatedAt: new Date().toISOString() };
+    try {
+      await supabase.from('notes').upsert({
+        id: updated.id,
+        title: updated.title,
+        content: updated.content,
+        color: updated.color,
+        is_pinned: updated.isPinned,
+        created_at: updated.createdAt,
+        updated_at: updated.updatedAt,
+      });
+      dispatch({ type: 'UPDATE_NOTE', payload: updated });
+    } catch (err) {
+      console.error('Error actualizando nota:', err);
+    }
+  };
+
+  const deleteNote = async (id: string) => {
+    try {
+      await supabase.from('notes').delete().eq('id', id);
+      dispatch({ type: 'DELETE_NOTE', payload: id });
+    } catch (err) {
+      console.error('Error eliminando nota:', err);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1587,6 +1732,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addInstructive,
         updateInstructive,
         deleteInstructive,
+        addNote,
+        updateNote,
+        deleteNote,
         refreshData,
         recalculateAllExpiryDates,
       }}

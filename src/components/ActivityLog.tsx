@@ -18,6 +18,7 @@ import {
   Calendar,
   Copy,
   Check,
+  StickyNote,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ActivityType, formatDate } from '../types';
@@ -49,6 +50,9 @@ const activityIcons: Record<ActivityType, React.ReactNode> = {
   instructive_updated: <Edit2 className="w-4 h-4" />,
   instructive_deleted: <Trash2 className="w-4 h-4" />,
   instructive_copied: <Copy className="w-4 h-4" />,
+  note_created: <Plus className="w-4 h-4" />,
+  note_updated: <Edit2 className="w-4 h-4" />,
+  note_deleted: <Trash2 className="w-4 h-4" />,
 };
 
 // Componente para copiar cuenta desde historial
@@ -102,6 +106,9 @@ const activityColors: Record<ActivityType, string> = {
   instructive_updated: 'bg-blue-500/20 text-blue-400',
   instructive_deleted: 'bg-red-500/20 text-red-400',
   instructive_copied: 'bg-cyan-500/20 text-cyan-400',
+  note_created: 'bg-yellow-500/20 text-yellow-400',
+  note_updated: 'bg-yellow-500/20 text-yellow-400',
+  note_deleted: 'bg-red-500/20 text-red-400',
 };
 
 const activityLabels: Record<ActivityType, string> = {
@@ -129,6 +136,9 @@ const activityLabels: Record<ActivityType, string> = {
   instructive_updated: 'Instructivo actualizado',
   instructive_deleted: 'Instructivo eliminado',
   instructive_copied: 'Instructivo copiado',
+  note_created: 'Nota creada',
+  note_updated: 'Nota actualizada',
+  note_deleted: 'Nota eliminada',
 };
 
 export function ActivityLog() {

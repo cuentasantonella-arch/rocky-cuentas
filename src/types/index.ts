@@ -115,6 +115,17 @@ export interface Instructive {
   updatedAt: string;
 }
 
+// Interface para Notas importantes
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  color: string; // Color de fondo de la nota
+  isPinned: boolean; // Si está fija en la parte superior
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AppState {
   accounts: Account[];
   products: Product[];
@@ -123,6 +134,7 @@ export interface AppState {
   settings: Settings;
   activityLog: ActivityLogEntry[];
   instructives: Instructive[];
+  notes: Note[];
 }
 
 // Tipos de actividad para el historial
@@ -150,7 +162,10 @@ export type ActivityType =
   | 'instructive_created'
   | 'instructive_updated'
   | 'instructive_deleted'
-  | 'instructive_copied';
+  | 'instructive_copied'
+  | 'note_created'
+  | 'note_updated'
+  | 'note_deleted';
 
 export interface ActivityLogEntry {
   id: string;
