@@ -644,6 +644,7 @@ export const getDurationText = (months: number): string => {
 };
 
 // Helper para formatear fecha - evita problemas de timezone
+// Formato: 01-Jul-2026
 export const formatDate = (dateString: string): string => {
   if (!dateString || dateString.trim() === '') return 'N/A';
 
@@ -661,11 +662,12 @@ export const formatDate = (dateString: string): string => {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return 'N/A';
 
-  return date.toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+  // Formato: 01-Jul-2026
+  const day = date.getDate().toString().padStart(2, '0');
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
 };
 
 // Helper para generar ID único
