@@ -53,10 +53,16 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
   }, [data]);
 
   // Validar solo email y password
+  // Validación simple: solo verificar que tenga @
   const validateRow = (row: any, index: number): string | null => {
-    if (!row.email?.trim()) return 'Email requerido';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) return 'Email inválido';
-    if (!row.password?.trim()) return 'Contraseña requerida';
+    const email = row.email?.toString().trim();
+    if (!email) return 'Email requerido';
+
+    // Solo verificar que tenga @
+    if (!email.includes('@')) return 'Email inválido';
+
+    // Verificar que la contraseña no esté vacía
+    if (!row.password?.toString().trim()) return 'Contraseña requerida';
     return null;
   };
 
@@ -152,9 +158,13 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
       const saleDate = new Date().toISOString().split('T')[0];
       const duration = 1;
 
+      // Usar el email tal como viene en Excel, solo limpiar espacios al inicio/final
+      const emailValue = row.email?.toString().trim() || '';
+      const passwordValue = row.password?.toString().trim() || '';
+
       return {
-        email: row.email.trim(),
-        password: row.password.trim(),
+        email: emailValue,
+        password: passwordValue,
         productType: product.name,
         plan: 'Disponible',
         clientName: '',

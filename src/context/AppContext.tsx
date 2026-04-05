@@ -575,9 +575,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       // MIGRACIÓN AUTOMÁTICA: Extraer clientes de cuentas existentes
       // Esto asegura que los clientes de cuentas anteriores se guarden en la sección de clientes
-      setTimeout(() => {
-        migrateClientsFromAccounts();
-      }, 100);
+      // IMPORTANTE: Pasar payload.accounts y payload.clients directamente para evitar problemas de sincronización
+      if (payload.accounts && payload.accounts.length > 0) {
+        setTimeout(() => {
+          migrateClientsFromAccounts(payload.accounts || [], payload.clients || []);
+        }, 300);
+      }
 
       setIsOnline(true);
       setIsInitialSync(false);
@@ -625,20 +628,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // FUNCIÓN DE MIGRACIÓN: Extraer clientes de cuentas existentes
   // Busca clientes en clientName y en profiles de todas las cuentas
-  const migrateClientsFromAccounts = async () => {
+  // Recibe accounts y existingClients como parámetros para evitar problemas de sincronización de estado
+  const migrateClientsFromAccounts = async (accounts: Account[], existingClients: Client[]) => {
     try {
+      console.log('🚀 Iniciando migración de clientes...');
+      console.log('📊 Cuentas recibidas:', accounts.length);
+
       // Obtener todos los clientes únicos de las cuentas
       const clientNames = new Set<string>();
 
       // 1. Extraer del campo clientName de cada cuenta
-      state.accounts.forEach(account => {
+      accounts.forEach((account, index) => {
+        console.log(`📧 Cuenta ${index + 1}: ${account.email} - Cliente: "${account.clientName}"`);
         if (account.clientName && account.clientName.trim() !== '') {
           clientNames.add(account.clientName.trim());
         }
 
         // 2. Extraer de los perfiles de cada cuenta
         if (account.profiles && Array.isArray(account.profiles)) {
-          account.profiles.forEach(profile => {
+          account.profiles.forEach((profile, pIndex) => {
+            console.log(`  Perfil ${pIndex + 1}: Cliente: "${profile.clientName}"`);
             if (profile.clientName && profile.clientName.trim() !== '') {
               clientNames.add(profile.clientName.trim());
             }
@@ -646,12 +655,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      console.log(`🔍 Migración de clientes: encontrados ${clientNames.size} clientes únicos`);
+      console.log(`🔍 Total clientes únicos encontrados: ${clientNames.size}`);
+      console.log('📋 Nombres de clientes:', Array.from(clientNames));
+
+      if (clientNames.size === 0) {
+        console.log('⚠️ No se encontraron clientes en las cuentas');
+        return;
+      }
 
       // Verificar cuáles ya existen y cuáles hay que agregar
+      // USAR existingClients que viene del payload en lugar de state.clients
       const existingClientNames = new Set(
-        state.clients.map(c => c.name.toLowerCase())
+        existingClients.map(c => c.name.toLowerCase())
       );
+      console.log(`👥 Clientes ya existentes: ${existingClientNames.size}`);
+      console.log('📋 Clientes existentes:', Array.from(existingClientNames));
 
       let addedCount = 0;
       for (const clientName of clientNames) {
