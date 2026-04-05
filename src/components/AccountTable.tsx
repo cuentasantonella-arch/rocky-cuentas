@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import {
   Search,
   Filter,
@@ -65,6 +65,18 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   // Estado para cuenta expandida en móvil
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
+  // Estado para rastrear cuentas que están siendo editadas (para mantener posición)
+  const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState<Set<string>>(new Set());
+
+  // Efecto para limpiar IDs de cuentas recientemente actualizadas
+  useEffect(() => {
+    if (recentlyUpdatedIds.size > 0) {
+      const timer = setTimeout(() => {
+        setRecentlyUpdatedIds(new Set());
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyUpdatedIds]);
 
   // Limpiar filtro de producto cuando se cambia de pestaña
   const handleTabChange = (productName: string) => {
@@ -97,6 +109,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       profiles: updatedProfiles,
       saleStatus: allSold ? 'sold' : 'available',
     });
+    setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
   };
 
   // Función para cambiar rápidamente el estado de venta (Vendida/Disponible)
@@ -119,6 +132,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         saleDate: todayStr,
         expiryDate: expiryDateStr,
       });
+      setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
       logActivity(
         'account_sold',
         `Cuenta ${account.email} marcada como Vendida`,
@@ -131,6 +145,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         ...account,
         saleStatus: newStatus,
       });
+      setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
       logActivity(
         'account_available',
         `Cuenta ${account.email} marcada como Disponible`,
@@ -143,6 +158,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         ...account,
         saleStatus: newStatus,
       });
+      setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
       logActivity(
         'account_sold',
         `Cuenta ${account.email} marcada como Vendida`,
@@ -166,6 +182,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         profiles: account.profiles?.map(p => ({ ...p, sold: false })),
         saleStatus: 'available' as SaleStatus,
       });
+      setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
       logActivity(
         'account_fallen',
         `Cuenta ${account.email} marcada como Caída`,
@@ -205,6 +222,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       duration: duration,
       expiryDate: account.expiryDate || expiryDateStr,
     });
+    setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
   };
 
   // Funciones para selección múltiple
@@ -232,6 +250,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
     if (!confirm(`¿Marcar ${selectedAccounts.size} cuentas como Vendidas?`)) return;
 
+    const updatedIds = new Set<string>();
     selectedAccounts.forEach(accountId => {
       const account = accounts.find(acc => acc.id === accountId);
       if (!account) return;
@@ -251,8 +270,10 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         expiryDate: account.expiryDate || expiryDateStr,
         clientName: account.clientName || 'Cliente',
       });
+      updatedIds.add(accountId);
     });
 
+    setRecentlyUpdatedIds(updatedIds);
     logActivity('account_sold', `${selectedAccounts.size} cuentas marcadas como Vendidas`);
     setSelectedAccounts(new Set());
   };
@@ -262,6 +283,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
     if (!confirm(`¿Marcar ${selectedAccounts.size} cuentas como Disponibles?`)) return;
 
+    const updatedIds = new Set<string>();
     selectedAccounts.forEach(accountId => {
       const account = accounts.find(acc => acc.id === accountId);
       if (!account) return;
@@ -275,8 +297,10 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         expiryDate: '',
         profiles: account.profiles?.map(p => ({ ...p, sold: false })),
       });
+      updatedIds.add(accountId);
     });
 
+    setRecentlyUpdatedIds(updatedIds);
     logActivity('account_available', `${selectedAccounts.size} cuentas marcadas como Disponibles`);
     setSelectedAccounts(new Set());
   };
@@ -287,6 +311,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     if (!confirm(`¿Marcar ${selectedAccounts.size} cuentas como Caídas?`)) return;
 
     const today = new Date().toISOString().split('T')[0];
+    const updatedIds = new Set<string>();
 
     selectedAccounts.forEach(accountId => {
       const account = accounts.find(acc => acc.id === accountId);
@@ -298,8 +323,10 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         saleStatus: 'available' as SaleStatus,
         profiles: account.profiles?.map(p => ({ ...p, sold: false })),
       });
+      updatedIds.add(accountId);
     });
 
+    setRecentlyUpdatedIds(updatedIds);
     logActivity('account_fallen', `${selectedAccounts.size} cuentas marcadas como Caídas`);
     setSelectedAccounts(new Set());
   };
@@ -383,6 +410,12 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const filteredAndSortedAccounts = useMemo(() => {
     let result = [...accounts];
 
+    // Guardar posiciones originales de cuentas filtradas (para mantener posición después de actualizar)
+    const originalPositions = new Map<string, number>();
+    result.forEach((acc, index) => {
+      originalPositions.set(acc.id, index);
+    });
+
     // Filtrar por pestaña de producto
     if (selectedProductTab !== 'all') {
       result = result.filter((acc) => acc.productType === selectedProductTab);
@@ -421,7 +454,109 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       result = result.filter((acc) => acc.saleStatus === filterSale);
     }
 
-    // Ordenar
+    // Si hay cuentas recientemente actualizadas, mantenerlas en su posición original
+    if (recentlyUpdatedIds.size > 0) {
+      // Ordenar: primero las cuentas recientemente actualizadas en su posición original, luego el resto ordenado
+      const recentlyUpdated: Account[] = [];
+      const others: Account[] = [];
+
+      // Crear mapa de cuentas actualizadas para acceso rápido
+      const updatedAccountsMap = new Map<string, Account>();
+      recentlyUpdatedIds.forEach(id => {
+        const acc = result.find(a => a.id === id);
+        if (acc) updatedAccountsMap.set(id, acc);
+      });
+
+      result.forEach(acc => {
+        if (updatedAccountsMap.has(acc.id)) {
+          recentlyUpdated.push(acc);
+        } else {
+          others.push(acc);
+        }
+      });
+
+      // Ordenar las otras cuentas
+      others.sort((a, b) => {
+        let comparison = 0;
+        switch (sortField) {
+          case 'clientName':
+            comparison = a.clientName.localeCompare(b.clientName);
+            break;
+          case 'productType':
+            comparison = a.productType.localeCompare(b.productType);
+            break;
+          case 'expiryDate':
+            comparison = new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+            break;
+          case 'saleDate':
+            comparison = new Date(a.saleDate).getTime() - new Date(b.saleDate).getTime();
+            break;
+          case 'provider':
+            comparison = a.provider.localeCompare(b.provider);
+            break;
+        }
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+
+      // Intercalar las cuentas actualizadas en sus posiciones originales
+      const finalResult: Account[] = [];
+      let otherIndex = 0;
+
+      // Crear mapa de posiciones originales para las cuentas actualizadas
+      const updatedOriginalPositions = new Map<string, number>();
+      result.forEach((acc, idx) => {
+        if (updatedAccountsMap.has(acc.id)) {
+          updatedOriginalPositions.set(acc.id, originalPositions.get(acc.id) ?? idx);
+        }
+      });
+
+      // Ordenar cuentas actualizadas por su posición original
+      recentlyUpdated.sort((a, b) => {
+        const posA = updatedOriginalPositions.get(a.id) ?? 0;
+        const posB = updatedOriginalPositions.get(b.id) ?? 0;
+        return posA - posB;
+      });
+
+      // Intercalar
+      let updatedIndex = 0;
+      let i = 0;
+
+      while (i < result.length) {
+        // Si hay cuentas actualizadas que deben estar en esta posición, agregarlas
+        while (updatedIndex < recentlyUpdated.length) {
+          const nextUpdatedPos = updatedOriginalPositions.get(recentlyUpdated[updatedIndex].id) ?? result.length;
+          if (nextUpdatedPos <= i) {
+            finalResult.push(recentlyUpdated[updatedIndex]);
+            updatedIndex++;
+          } else {
+            break;
+          }
+        }
+
+        // Si aún no llegamos al final de todas las cuentas
+        if (i < result.length) {
+          // Si la cuenta actual es una cuenta actualizada, agregarla
+          if (updatedAccountsMap.has(result[i].id) && !finalResult.some(a => a.id === result[i].id)) {
+            // Ya se agregó arriba si corresponde
+          } else {
+            finalResult.push(result[i]);
+          }
+          i++;
+        } else {
+          break;
+        }
+      }
+
+      // Agregar cuentas actualizadas restantes al final
+      while (updatedIndex < recentlyUpdated.length) {
+        finalResult.push(recentlyUpdated[updatedIndex]);
+        updatedIndex++;
+      }
+
+      return finalResult;
+    }
+
+    // Ordenar normal si no hay cuentas recientemente actualizadas
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
@@ -445,7 +580,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     });
 
     return result;
-  }, [accounts, search, filterProduct, filterProvider, filterStatus, filterSale, sortField, sortDirection, state.settings.alarmDays, selectedProductTab]);
+  }, [accounts, search, filterProduct, filterProvider, filterStatus, filterSale, sortField, sortDirection, state.settings.alarmDays, selectedProductTab, recentlyUpdatedIds]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -1143,6 +1278,7 @@ Rocky Cuentas - Gracias por su compra`;
                               saleDate: '',
                               expiryDate: '',
                             });
+                            setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
                             logActivity(
                               'account_available',
                               `Cuenta ${account.email} marcada como Disponible`,
@@ -1168,6 +1304,7 @@ Rocky Cuentas - Gracias por su compra`;
                                 expiryDate: expiryDateStr,
                                 clientName: account.clientName || 'Cliente',
                               });
+                              setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
                               logActivity(
                                 'account_sold',
                                 `Cuenta ${account.email} marcada como Vendida`,
@@ -1180,6 +1317,7 @@ Rocky Cuentas - Gracias por su compra`;
                                 ...account,
                                 saleStatus: 'sold',
                               });
+                              setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
                               logActivity(
                                 'account_sold',
                                 `Cuenta ${account.email} marcada como Vendida`,
@@ -1197,6 +1335,7 @@ Rocky Cuentas - Gracias por su compra`;
                               saleStatus: 'fallen',
                               profiles: account.profiles?.map(p => ({ ...p, sold: false })),
                             });
+                            setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
                             logActivity(
                               'account_fallen',
                               `Cuenta ${account.email} marcada como Caída`,
