@@ -582,6 +582,31 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/ViX_Logo.svg/1280px-ViX_Logo.svg.png',
   },
+  {
+    id: 'capcut',
+    name: 'Capcut',
+    icon: 'film',
+    plans: ['Cuenta Europea'],
+    color: '#00f2ea',
+    imageUrl: '',
+    instructive: `⚠️ Instructivo CapCut – Importante
+
+La cuenta proporcionada es europea, por lo que se deben respetar ciertas políticas:
+
+🔐 Condiciones de uso:
+- Debe activarse el mismo día de la compra
+- La cuenta es privada
+- Solo se permite el uso en máximo 2 dispositivos al mismo tiempo
+- Copie y pegue el correo y contraseña para evitar errores
+- ⚠️ No hay garantía en caso de bloqueo por ingreso incorrecto de datos
+- No ingresar en más de 2 dispositivos simultáneamente
+- Puede cambiar la contraseña si lo desea
+- No recomendamos revender o compartir la cuenta
+
+🚫 Importante: Si se incumplen las políticas y la cuenta se bloquea, deberá esperar entre 24 horas y 3 días para su recuperación.
+
+🙏 Gracias por tu compra 👍🏻😊`,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
