@@ -27,6 +27,7 @@ import {
   X,
   Calendar,
   Menu,
+  Bell,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
@@ -67,6 +68,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
   // Estado para rastrear cuentas que están siendo editadas (para mantener posición)
   const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState<Set<string>>(new Set());
+  // Estado para rastrear recordatorios copiados
+  const [copiedReminder, setCopiedReminder] = useState<string | null>(null);
 
   // Efecto para limpiar IDs de cuentas recientemente actualizadas
   useEffect(() => {
@@ -390,6 +393,40 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     setCopiedProfile(`${account.id}-${profile.slot}`);
     setTimeout(() => {
       setCopiedProfile(null);
+    }, 3000);
+  };
+
+  // Función para generar mensaje de recordatorio de vencimiento
+  const generateRenewalReminder = (account: Account) => {
+    const saleDateFormatted = formatDate(account.saleDate);
+    const expiryDateFormatted = formatDate(account.expiryDate);
+    const daysLeft = getDaysRemaining(account.expiryDate);
+
+    return `🔔 RECORDATORIO DE VENCIMIENTO - ${account.productType.toUpperCase()}
+
+Hola ${account.clientName || 'cliente'},
+
+Te informamos que tu cuenta de ${account.productType} está próxima a vencer.
+
+📧 Correo: ${account.email}
+📅 Fecha de contratación: ${saleDateFormatted}
+⏰ Fecha de vencimiento: ${expiryDateFormatted}
+📆 Días restantes: ${daysLeft} días
+
+Si deseas mantener la cuenta con el mismo correo electrónico, por favor realiza el pago de la renovación antes de la fecha de vencimiento.
+
+¡Gracias por confiar en nosotros! 😊
+
+Enviado desde Rocky Cuentas`;
+  };
+
+  // Función para copiar recordatorio de vencimiento
+  const handleCopyRenewalReminder = (account: Account) => {
+    const message = generateRenewalReminder(account);
+    navigator.clipboard.writeText(message);
+    setCopiedReminder(account.id);
+    setTimeout(() => {
+      setCopiedReminder(null);
     }, 3000);
   };
 
@@ -1368,6 +1405,22 @@ Rocky Cuentas - Gracias por su compra`;
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      {/* Botón de recordatorio de vencimiento */}
+                      <button
+                        onClick={() => handleCopyRenewalReminder(account)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          copiedReminder === account.id
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'hover:bg-yellow-500/20 text-gray-400 hover:text-yellow-400'
+                        }`}
+                        title="Copiar recordatorio de vencimiento"
+                      >
+                        {copiedReminder === account.id ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Bell className="w-4 h-4" />
+                        )}
+                      </button>
                       <button
                         onClick={() => onDuplicate(account)}
                         className="p-2 hover:bg-indigo-500/20 rounded-lg text-gray-400 hover:text-indigo-400 transition-colors"
