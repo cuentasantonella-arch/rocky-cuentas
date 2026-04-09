@@ -557,6 +557,45 @@ Por ello, se recomienda respaldar o guardar sus proyectos regularmente 💾 para
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#7D2AE8',
     imageUrl: '/images/canva-pro-logo.jpeg',
+    instructive: `✨ Instructivo para Activación de Canva Pro ✨
+
+📩 Revisar su correo electrónico
+Diríjase a la bandeja de entrada del correo que nos proporcionó. Allí recibirá una invitación de Canva Pro.
+
+✅ Aceptar la invitación
+Abra el correo y haga clic en el enlace que indica que "Rocky Cuentas la ha invitado a trabajar en su equipo de Canva". Luego seleccione Aceptar invitación.
+
+🔐 Iniciar sesión en Canva
+Al aceptar la invitación, será redirigido automáticamente a la plataforma. Inicie sesión con su cuenta si se lo solicita.
+
+👥 Seleccionar el equipo correcto
+Canva le pedirá elegir dónde desea trabajar:
+
+Cuenta personal
+
+Equipo Rocky Cuentas
+
+👉 Debe seleccionar Equipo Rocky Cuentas.
+
+🚀 Acceso a Canva Pro
+Una vez dentro del equipo, ya tendrá acceso completo a todas las herramientas de Canva Pro.
+
+🔄 Opcional: Transferir diseños desde su cuenta personal
+
+Si desea mover diseños existentes:
+
+Ingrese a su cuenta personal.
+
+Abra el diseño que desea trasladar.
+
+Haga clic en 📤 Compartir y copie el enlace.
+
+Luego acceda al equipo Rocky Cuentas.
+
+Pegue y abra ese enlace para trabajar el diseño dentro del equipo.
+
+💬 Soporte
+Ante cualquier duda o consulta, no dude en contactarnos. ¡Estamos para ayudarle! 😊`,
   },
   {
     id: '21',
