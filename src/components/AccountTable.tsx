@@ -483,7 +483,12 @@ Enviado desde Rocky Cuentas`;
 
     // Filtrar por estado
     if (filterStatus) {
-      result = result.filter((acc) => getAccountStatus(acc.expiryDate, state.settings.alarmDays) === filterStatus);
+      if ((filterStatus as string) === 'fallen') {
+        // Filtrar cuentas caídas por su estado de venta
+        result = result.filter((acc) => acc.saleStatus === 'fallen');
+      } else {
+        result = result.filter((acc) => getAccountStatus(acc.expiryDate, state.settings.alarmDays) === filterStatus);
+      }
     }
 
     // Filtrar por estado de venta
@@ -842,6 +847,7 @@ Enviado desde Rocky Cuentas`;
               <option value="expiring">Por Vencer</option>
               <option value="critical">Crítico</option>
               <option value="expired">Vencida</option>
+              <option value="fallen">Caída</option>
             </select>
 
             <select
@@ -852,6 +858,7 @@ Enviado desde Rocky Cuentas`;
               <option value="">Venta</option>
               <option value="available">Disponible</option>
               <option value="sold">Vendida</option>
+              <option value="fallen">Caída</option>
             </select>
           </div>
         </div>
