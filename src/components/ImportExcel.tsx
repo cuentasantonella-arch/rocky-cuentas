@@ -54,12 +54,24 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
 
   // Validar solo email y password
   // Validación simple: solo verificar que tenga @
-  const validateRow = (row: any, index: number): string | null => {
+  // Para MaxPlayer y Blessed Player, permitir usuario sin @
+  const validateRow = (row: any, index: number, productType: string): string | null => {
     const email = row.email?.toString().trim();
-    if (!email) return 'Email requerido';
 
-    // Solo verificar que tenga @
-    if (!email.includes('@')) return 'Email inválido';
+    // Productos que usan "Usuario" en vez de "Correo"
+    const usesUsername = ['MaxPlayer', 'Blessed Player'].includes(productType);
+
+    if (!email && usesUsername) {
+      // Para MaxPlayer/Blessed Player, el campo email es en realidad el usuario
+      if (!email) return 'Usuario requerido';
+    } else if (!email) {
+      return 'Email requerido';
+    }
+
+    // Si no es MaxPlayer/Blessed Player, verificar que tenga @
+    if (!usesUsername && email && !email.includes('@')) {
+      return 'Email inválido';
+    }
 
     // Verificar que la contraseña no esté vacía
     if (!row.password?.toString().trim()) return 'Contraseña requerida';
@@ -91,8 +103,10 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
           });
 
           // Validar cada fila
+          // Si no hay producto seleccionado, no validar formato de email (@)
           const validated = normalized.map((row, index) => {
-            const error = validateRow(row, index);
+            const productTypeForValidation = selectedProductName || '';
+            const error = validateRow(row, index, productTypeForValidation);
             return {
               ...row,
               _rowIndex: index + 1,
