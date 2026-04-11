@@ -429,11 +429,12 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                 Credenciales
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {formData.productType === 'Blessed Player' ? (
+                {/* MaxPlayer y Blessed Player usan Usuario en vez de Correo */}
+                {['MaxPlayer', 'Blessed Player'].includes(formData.productType) ? (
                   <>
                     <div>
                       <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                        Código *
+                        {formData.productType === 'Blessed Player' ? 'Código *' : 'Usuario *'}
                       </label>
                       <input
                         type="text"
@@ -444,26 +445,28 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                           errors.email ? 'border-red-500' : ''
                         }`}
                         style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
-                        placeholder="Código del dispositivo"
+                        placeholder={formData.productType === 'Blessed Player' ? 'Código del dispositivo' : 'Usuario'}
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                        Usuario *
-                      </label>
-                      <input
-                        type="text"
-                        name="user"
-                        value={formData.user}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                          errors.email ? 'border-red-500' : ''
-                        }`}
-                        style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
-                        placeholder="Usuario del dispositivo"
-                      />
-                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                    </div>
+                    {formData.productType === 'Blessed Player' && (
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                          Usuario *
+                        </label>
+                        <input
+                          type="text"
+                          name="user"
+                          value={formData.user}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                            errors.email ? 'border-red-500' : ''
+                          }`}
+                          style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                          placeholder="Usuario del dispositivo"
+                        />
+                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div>
