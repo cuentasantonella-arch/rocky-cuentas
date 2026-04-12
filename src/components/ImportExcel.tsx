@@ -61,16 +61,14 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
     // Productos que usan "Usuario" en vez de "Correo"
     const usesUsername = ['MaxPlayer', 'Blessed Player'].includes(productType);
 
-    if (!email && usesUsername) {
-      // Para MaxPlayer/Blessed Player, el campo email es en realidad el usuario
+    // Para MaxPlayer/Blessed Player, solo verificar que el campo usuario no esté vacío
+    if (usesUsername) {
       if (!email) return 'Usuario requerido';
-    } else if (!email) {
-      return 'Email requerido';
-    }
-
-    // Si no es MaxPlayer/Blessed Player, verificar que tenga @
-    if (!usesUsername && email && !email.includes('@')) {
-      return 'Email inválido';
+    } else {
+      // Para otros productos, requerir email
+      if (!email) return 'Email requerido';
+      // Verificar formato de email (@)
+      if (!email.includes('@')) return 'Email inválido';
     }
 
     // Verificar que la contraseña no esté vacía
