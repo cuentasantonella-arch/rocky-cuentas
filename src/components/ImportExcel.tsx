@@ -10,7 +10,6 @@ interface ImportExcelProps {
 
 export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
   const { state, importAccounts } = useApp();
-  const [data, setData] = useState<any[]>([]);
   const [fileName, setFileName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -25,32 +24,8 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
     return product?.name || '';
   }, [selectedProduct, state.products]);
 
-  // Detectar duplicados en las cuentas existentes
-  const duplicateEmails = useMemo(() => {
-    if (!selectedProductName) return [];
-    const existingEmails = state.accounts
-      .filter((acc) => acc.productType === selectedProductName)
-      .map((acc) => acc.email.toLowerCase());
-    return data
-      .filter((row) => row._valid && existingEmails.includes(row.email?.toLowerCase()))
-      .map((row) => row.email);
-  }, [data, selectedProductName, state.accounts]);
-
-  // Detectar duplicados dentro del mismo archivo
-  const duplicatesInFile = useMemo(() => {
-    const emails = data.map((row) => row.email?.toLowerCase());
-    const seen = new Set<string>();
-    const duplicates: string[] = [];
-    emails.forEach((email) => {
-      if (email && seen.has(email)) {
-        if (!duplicates.includes(email)) {
-          duplicates.push(email);
-        }
-      }
-      seen.add(email);
-    });
-    return duplicates;
-  }, [data]);
+  // Almacenar datos crudos sin validar
+  const [rawData, setRawData] = useState<any[]>([]);
 
   // Validar solo email y password
   // Validación simple: solo verificar que tenga @
@@ -76,6 +51,60 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
     return null;
   };
 
+  // Validar datos cuando cambia el producto seleccionado
+  const validatedData = useMemo(() => {
+    if (rawData.length === 0) return [];
+
+    const productTypeForValidation = selectedProductName || '';
+
+    return rawData.map((row, index) => {
+      // Si no hay producto seleccionado, marcar como válido (se validará después)
+      if (!productTypeForValidation) {
+        return {
+          ...row,
+          _rowIndex: index + 1,
+          _error: null,
+          _valid: true,
+        };
+      }
+
+      const error = validateRow(row, index, productTypeForValidation);
+      return {
+        ...row,
+        _rowIndex: index + 1,
+        _error: error,
+        _valid: !error,
+      };
+    });
+  }, [rawData, selectedProductName]);
+
+  // Detectar duplicados en las cuentas existentes
+  const duplicateEmails = useMemo(() => {
+    if (!selectedProductName) return [];
+    const existingEmails = state.accounts
+      .filter((acc) => acc.productType === selectedProductName)
+      .map((acc) => acc.email.toLowerCase());
+    return validatedData
+      .filter((row) => row._valid && existingEmails.includes(row.email?.toLowerCase()))
+      .map((row) => row.email);
+  }, [validatedData, selectedProductName, state.accounts]);
+
+  // Detectar duplicados dentro del mismo archivo
+  const duplicatesInFile = useMemo(() => {
+    const emails = validatedData.map((row) => row.email?.toLowerCase());
+    const seen = new Set<string>();
+    const duplicates: string[] = [];
+    emails.forEach((email) => {
+      if (email && seen.has(email)) {
+        if (!duplicates.includes(email)) {
+          duplicates.push(email);
+        }
+      }
+      seen.add(email);
+    });
+    return duplicates;
+  }, [validatedData]);
+
   const processFile = useCallback(
     (file: File) => {
       setFileName(file.name);
@@ -100,20 +129,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
             return normalizedRow;
           });
 
-          // Validar cada fila
-          // Si no hay producto seleccionado, no validar formato de email (@)
-          const validated = normalized.map((row, index) => {
-            const productTypeForValidation = selectedProductName || '';
-            const error = validateRow(row, index, productTypeForValidation);
-            return {
-              ...row,
-              _rowIndex: index + 1,
-              _error: error,
-              _valid: !error,
-            };
-          });
-
-          setData(validated);
+          setRawData(normalized);
         } catch (error) {
           console.error('Error processing file:', error);
         } finally {
@@ -147,7 +163,14 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
   };
 
   const handleImport = () => {
-    const validRows = data.filter((row) => row._valid);
+    // Usar rawData para obtener los valores originales
+    const validRows = rawData
+      .map((row, index) => ({
+        ...row,
+        _rowIndex: index + 1,
+        _valid: validatedData[index]?._valid ?? true,
+      }))
+      .filter((row) => row._valid);
 
     if (validRows.length === 0 || !selectedProduct || !providerName.trim() || !renewalDate) {
       return;
@@ -212,10 +235,10 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
     XLSX.writeFile(wb, 'plantilla_cuentas.xlsx');
   };
 
-  const validCount = data.filter((d) => d._valid).length;
-  const invalidCount = data.length - validCount;
+  const validCount = validatedData.filter((d) => d._valid).length;
+  const invalidCount = validatedData.length - validCount;
   const uniqueDuplicates = [...new Set([...duplicateEmails, ...duplicatesInFile.map(e => e.toLowerCase())])];
-  const toImportCount = validCount - uniqueDuplicates.filter(d => data.some(row => row.email?.toLowerCase() === d.toLowerCase() && row._valid)).length;
+  const toImportCount = validCount - uniqueDuplicates.filter(d => validatedData.some(row => row.email?.toLowerCase() === d.toLowerCase() && row._valid)).length;
 
   const canImport = validCount > 0 && selectedProduct && providerName.trim() && renewalDate;
 
@@ -312,7 +335,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
               </div>
             </div>
 
-            {!canImport && data.length > 0 && (
+            {!canImport && validatedData.length > 0 && (
               <p className="mt-3 text-sm text-yellow-400">
                 ⚠️ Completa todos los campos (*) para importar
               </p>
@@ -320,7 +343,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
           </div>
 
           {/* Upload Area */}
-          {data.length === 0 && (
+          {rawData.length === 0 && (
             <div
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
@@ -362,7 +385,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
           </div>
 
           {/* Preview */}
-          {data.length > 0 && (
+          {rawData.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -387,7 +410,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
                   )}
                 </div>
                 <button
-                  onClick={() => setData([])}
+                  onClick={() => setRawData([])}
                   className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   Cambiar archivo
@@ -407,7 +430,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.map((row, index) => {
+                      {validatedData.map((row, index) => {
                         const isDuplicate = uniqueDuplicates.some(d => d.toLowerCase() === row.email?.toLowerCase());
                         return (
                           <tr
