@@ -57,6 +57,13 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
 
     const productTypeForValidation = selectedProductName || '';
 
+    console.log('DEBUG Validation:', {
+      selectedProductName,
+      productTypeForValidation,
+      isMaxPlayer: ['MaxPlayer', 'Blessed Player'].includes(productTypeForValidation),
+      rawDataCount: rawData.length
+    });
+
     return rawData.map((row, index) => {
       // Si no hay producto seleccionado, marcar como válido (se validará después)
       if (!productTypeForValidation) {

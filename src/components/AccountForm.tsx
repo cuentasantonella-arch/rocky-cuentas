@@ -202,6 +202,9 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
+    // Para MaxPlayer y Blessed Player, usar "Usuario" en vez de "Correo"
+    const usesUsername = ['MaxPlayer', 'Blessed Player'].includes(formData.productType);
+
     // Para Bleezed Player, requerir al menos Código o Usuario
     const isBleezed = formData.productType === 'Blessed Player';
     if (isBleezed) {
@@ -209,12 +212,12 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
         newErrors.email = 'Código o Usuario es requerido';
       }
     } else {
-      if (!formData.email.trim()) newErrors.email = 'El campo es requerido';
+      if (!formData.email.trim()) newErrors.email = usesUsername ? 'El usuario es requerido' : 'El campo es requerido';
     }
 
     // Validar que no exista otra cuenta con el mismo email y producto
-    // Solo verificar duplicados para productos que usan email (no Bleezed)
-    if (formData.productType !== 'Blessed Player') {
+    // Solo verificar duplicados para productos que usan email (no MaxPlayer ni Bleezed)
+    if (formData.productType !== 'Blessed Player' && formData.productType !== 'MaxPlayer') {
       const emailNormalized = formData.email.trim().toLowerCase();
       const existingAccount = state.accounts.find(
         acc =>
@@ -225,15 +228,15 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       if (existingAccount) {
         newErrors.email = `Ya existe una cuenta con este email en ${formData.productType}`;
       }
-      // Validar formato de email solo si no es Bleezed
+      // Validar formato de email solo si no es MaxPlayer ni Bleezed
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
         newErrors.email = 'Correo inválido';
       }
     }
 
-    // Para ChatGPT y Bleezed Player, la contraseña es opcional
+    // Para ChatGPT, MaxPlayer y Bleezed Player, la contraseña es opcional
     const isChatGPT = formData.productType === 'ChatGPT Plus';
-    if (!isChatGPT && !isBleezed && !formData.password.trim()) {
+    if (!isChatGPT && !isBleezed && !usesUsername && !formData.password.trim()) {
       newErrors.password = 'La contraseña es requerida';
     }
     if (!formData.productType) newErrors.productType = 'Selecciona un producto';
