@@ -1199,17 +1199,19 @@ Enviado desde Rocky Cuentas`;
                       {!hasProfiles && account.clientName && (
                         <button
                           onClick={() => {
-                            const message = `🎬 CUENTA ${account.productType.toUpperCase()}
+                            const message = `✅ Entrega Automática - ${account.productType}
 
+👋 Cliente: ${account.clientName || 'N/A'}
 📧 Correo: ${account.email}
 🔐 Contraseña: ${account.password}
+👤 Perfil: ${account.plan.includes('Pantalla') ? 'Pantalla' : 'Principal'}
+🔢 PIN: N/A
 
-👋 Cliente: ${account.clientName}
 📅 Fecha de inicio: ${formatDate(account.saleDate)}
 ⏰ Duración: ${account.duration} mes(es)
 📆 Vence: ${formatDate(account.expiryDate)}
 
-Rocky Cuentas - Gracias por su compra`;
+Att. IA Rocky Cuentas`;
                             navigator.clipboard.writeText(message);
                             alert('¡Mensaje copiado! Puedes pegarlo en WhatsApp, Telegram o SMS.');
                           }}
@@ -1499,20 +1501,19 @@ Rocky Cuentas - Gracias por su compra`;
                               const expiryDate = account.expiryDate ? formatDate(account.expiryDate) : 'N/A';
                               const duration = account.duration ? `${account.duration} mes(es)` : 'N/A';
 
-                              return `🎬 CUENTA ${account.productType.toUpperCase()}
+                              return `✅ Entrega Automática - ${account.productType}
 
+👋 Cliente: ${profile.clientName || 'N/A'}
 📧 Correo: ${account.email}
 🔐 Contraseña: ${account.password}
-
 👤 ${profileLabel}: ${profile.slot}
-👋 Cliente: ${profile.clientName || 'N/A'}
-🔢 PIN: ${profile.pin || 'Sin PIN'}
+🔢 PIN: ${profile.pin || 'N/A'}
 
 📅 Fecha de inicio: ${startDate}
 ⏰ Duración: ${duration}
 📆 Vence: ${expiryDate}
 
-Rocky Cuentas - Gracias por su compra`;
+Att. IA Rocky Cuentas`;
                             };
 
                             const handleCopyMessage = () => {
