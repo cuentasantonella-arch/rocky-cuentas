@@ -28,6 +28,8 @@ import {
   Calendar,
   Menu,
   Bell,
+  StickyNote,
+  Save,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
@@ -70,6 +72,9 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [recentlyUpdatedIds, setRecentlyUpdatedIds] = useState<Set<string>>(new Set());
   // Estado para rastrear recordatorios copiados
   const [copiedReminder, setCopiedReminder] = useState<string | null>(null);
+  // Estado para el modal de notas
+  const [notesModal, setNotesModal] = useState<{ accountId: string; notes: string } | null>(null);
+  const [tempNotes, setTempNotes] = useState('');
 
   // Efecto para limpiar IDs de cuentas recientemente actualizadas
   useEffect(() => {
@@ -194,6 +199,26 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
         account.id
       );
     }
+  };
+
+  // Función para abrir modal de notas
+  const openNotesModal = (account: Account) => {
+    setTempNotes(account.notes || '');
+    setNotesModal({ accountId: account.id, notes: account.notes || '' });
+  };
+
+  // Función para guardar notas
+  const saveNotes = () => {
+    if (!notesModal) return;
+    const account = accounts.find(acc => acc.id === notesModal.accountId);
+    if (account) {
+      updateAccount({
+        ...account,
+        notes: tempNotes.trim() || undefined,
+      });
+      setRecentlyUpdatedIds(prev => new Set(prev).add(account.id));
+    }
+    setNotesModal(null);
   };
 
   // Función para marcar todos los perfiles como vendidos
@@ -1414,6 +1439,21 @@ Att. IA Rocky Cuentas`;
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      {/* Botón de notas */}
+                      <button
+                        onClick={() => openNotesModal(account)}
+                        className={`p-2 rounded-lg transition-colors relative ${
+                          account.notes
+                            ? 'bg-yellow-500/20 text-yellow-400 hover:text-yellow-300'
+                            : 'hover:bg-yellow-500/20 text-gray-400 hover:text-yellow-400'
+                        }`}
+                        title={account.notes ? `Notas: ${account.notes}` : 'Agregar notas'}
+                      >
+                        <StickyNote className="w-4 h-4" />
+                        {account.notes && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+                        )}
+                      </button>
                       {/* Botón de recordatorio de vencimiento */}
                       <button
                         onClick={() => handleCopyRenewalReminder(account)}
@@ -1710,6 +1750,61 @@ Att. IA Rocky Cuentas`;
           Mostrando {filteredAndSortedAccounts.length} de {accounts.length} cuentas
         </p>
       </div>
+
+      {/* Modal de Notas */}
+      {notesModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1a2e] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-700">
+            {/* Header */}
+            <div className="bg-[#16213e] px-6 py-4 flex items-center justify-between border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                <StickyNote className="w-5 h-5 text-yellow-400" />
+                <h2 className="text-lg font-semibold text-white">Notas de la cuenta</h2>
+              </div>
+              <button
+                onClick={() => setNotesModal(null)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="p-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Agrega una observación o nota sobre esta cuenta:
+              </label>
+              <textarea
+                value={tempNotes}
+                onChange={(e) => setTempNotes(e.target.value)}
+                placeholder="Ej: Cuenta verificada, Problema con el PIN, Cliente difícil..."
+                className="w-full h-32 bg-[#0f0f1a] border border-gray-600 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+                autoFocus
+              />
+              {tempNotes && (
+                <p className="mt-2 text-xs text-gray-500">
+                  {tempNotes.length} caracteres
+                </p>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="flex gap-3 p-6 border-t border-gray-700 bg-[#0f0f1a]/50">
+              <button
+                onClick={() => setNotesModal(null)}
+                className="flex-1 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveNotes}
+                className="flex-1 px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
