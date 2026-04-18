@@ -219,57 +219,37 @@ Quedamos atentos para ayudarte y resolver cualquier consulta. 😊`,
     plans: ['Completo 4K', '2 Pantallas', '5 Perfiles', '4 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `✅ GARANTÍA Y USO DE NETFLIX 🎬🔐
+    instructive: `🛑 LEER ANTES DE INSTALAR: AQUÍ ESTÁ TU GARANTÍA Y USO DE TU CUENTA NETFLIX 🎬🔐
 
-¡Gracias por tu compra! 🙌 A continuación, te explicamos todo lo que necesitas saber sobre el uso y garantía de tu cuenta:
+¡Gracias por tu confianza! 🙌 Para asegurar la estabilidad de tu servicio, sigue estas pautas:
 
-OJO CON LA NUEVA FORMA PARA INGRESAR CON CONTRASEÑA DESDE PC Y CELULAR:
-👉 Instrucciones aquí:
-🔗 https://postimg.cc/NyqCkQdp
+🔐 ACCESO Y CONFIGURACIÓN
 
-📌 USO CORRECTO DE LA CUENTA
-La cuenta debe utilizarse solo en la cantidad de pantallas o dispositivos incluidos en el plan que compraste.
+Ingreso Seguro: 💻📱 Si usas PC o Celular, revisa cómo ingresar pinchando este link: https://postimg.cc/NyqCkQdp 👈
 
-➡️ Ejemplo: Si adquiriste un plan de 1 pantalla y lo usás en tu TV, no podés instalarlo en otro dispositivo, aunque no estés usando el primero.
+Hogar Netflix: 🏠 Si a los 20 días aparece el mensaje "Tu cuenta no es parte de Grupo Hogar", sigue estos pasos según tu equipo:
 
-⚠️ IMPORTANTE:
-Cambiar de dispositivo sin autorización puede provocar el bloqueo de la cuenta.
-En caso de mal uso, la garantía se anula automáticamente y no hay derecho a reclamo.
+Smart TV: 📺 Mira cómo solucionarlo pinchando este link: https://postimg.cc/jW5XjCc5 👈
 
-👉 Si necesitas usar Netflix en más dispositivos, te recomendamos contratar un plan que se ajuste a tus necesidades.
+Dispositivos Móviles: 📱 Mira cómo solucionarlo pinchando este link: https://postimg.cc/Jyrs2mNW 👈
+(Selecciona "Ver temporalmente" y pide tu código por mail o chat).
 
-📣 MENSAJE QUE PUEDE APARECER A LOS 20 DÍAS
-A partir del día 20 de uso, puede aparecer el siguiente mensaje:
+📌 REGLAS DE USO (EVITA BLOQUEOS)
 
-🛑 "Tu cuenta no es parte de Grupo Hogar"
+Límite de Pantallas: 🚫 Usa la cuenta solo en la cantidad de dispositivos contratados.
 
-🔄 ¡No te preocupes! Es completamente normal.
-Dependiendo del dispositivo que estés usando, seguí las siguientes instrucciones:
+Dispositivo Fijo: 📺 Si compraste 1 pantalla para tu TV, no debes abrirla en otros equipos.
 
-📺 EN SMART TV:
-👉 Instrucciones aquí:
-🔗 https://postimg.cc/jW5XjCc5
+Garantía: ⚠️ El mal uso o cambio de dispositivo sin previo aviso anula la garantía automáticamente.
 
-📱 EN DISPOSITIVOS MÓVILES:
-👉 Instrucciones aquí:
-🔗 https://postimg.cc/Jyrs2mNW
-Presioná "Ver temporalmente", luego enviá un mail solicitando el código.
+⏳ PLANES MAYORES A UN MES
 
-📩 Una vez que completes los pasos, escríbenos para enviarte el código de hogar.
+Renovación Mensual: 🔄 Recibirás una cuenta nueva cada 30 días (excepto en planes de 4 pantallas, que son de uso continuo).
 
-⏳ SI CONTRATASTE UN PLAN MAYOR A 1 MES:
-La primera cuenta tiene una duración de 30 días.
-Al finalizar, nos avisas y te enviaremos una nueva cuenta para seguir usando el servicio.
+Aviso de cambio: 📩 Al finalizar tu mes, escríbenos para entregarte tus nuevas credenciales y seguir disfrutando del servicio.
 
-🔁 Este proceso se repite mes a mes hasta completar el tiempo total contratado.
-
-✅ Solo los planes de 4 pantallas permiten uso continuo sin cambio de cuenta.
-
-💬 ¿Dudas o consultas?
-Estamos siempre disponibles para ayudarte 💙
-
-🔒 ¡Gracias por confiar en nosotros!
-— Equipo Cuentas Rocky`,
+💬 ¿Necesitas ayuda? Estamos conectados para asistirte. 💙
+Atentamente: Equipo Rocky Cuentas`,
   },
   {
     id: '2',
