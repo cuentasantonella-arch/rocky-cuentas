@@ -406,12 +406,12 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
   },
   {
     id: '14',
-    name: 'Netflix Extra',
+    name: 'Cerrar Netflix con Pines',
     icon: 'tv',
     plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `🔹📺✨ NETFLIX EXTRA - 1 PIN
+    instructive: `🔹📺✨ CERRAR NETFLIX CON PINES - 1 PIN
 
 ✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
 
@@ -631,8 +631,8 @@ La cuenta proporcionada es europea, por lo que se deben respetar ciertas políti
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
 
-// Productos que usan 1 solo perfil con PIN (ej: Netflix Extra)
-export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
+// Productos que usan 1 solo perfil con PIN (ej: Cerrar Netflix con Pines)
+export const SINGLE_PROFILE_PRODUCTS = ['Cerrar Netflix con Pines', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],
