@@ -7,7 +7,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getAccountStatus, getDaysRemaining } from '../types';
+import { getAccountStatus, getDaysRemaining, getChileDate } from '../types';
 
 interface StatsCardsProps {
   accounts: any[];
@@ -17,7 +17,7 @@ export function StatsCards({ accounts }: StatsCardsProps) {
   const { state } = useApp();
 
   const stats = useMemo(() => {
-    const today = new Date();
+    const today = getChileDate();
     today.setHours(0, 0, 0, 0);
 
     const active = accounts.filter(

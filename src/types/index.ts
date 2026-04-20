@@ -645,9 +645,33 @@ export const DEFAULT_SETTINGS: Settings = {
 // Instructivos predeterminados - VACÍO, se agregan desde la UI
 export const DEFAULT_INSTRUCTIVES: Instructive[] = [];
 
+// Helper para obtener la fecha actual de Chile (UTC-3)
+// Chile no usa horario de verano actualmente (desde 2015)
+export const getChileDate = (): Date => {
+  const now = new Date();
+  // Obtener el offset de Chile (UTC-3 = -180 minutos)
+  const chileOffset = -3 * 60; // minutos
+  // Obtener el offset actual del navegador
+  const localOffset = now.getTimezoneOffset();
+  // Calcular la diferencia
+  const diff = chileOffset - localOffset;
+  // Ajustar la fecha
+  const chileDate = new Date(now.getTime() + diff * 60 * 1000);
+  return chileDate;
+};
+
+// Helper para obtener la fecha actual de Chile como string YYYY-MM-DD
+export const getChileDateString = (): string => {
+  const chileDate = getChileDate();
+  const year = chileDate.getFullYear();
+  const month = (chileDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = chileDate.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Helper para calcular estado de la cuenta
 export const getAccountStatus = (expiryDate: string, alarmDays: number[]): AccountStatus => {
-  const today = new Date();
+  const today = getChileDate();
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(expiryDate);
   expiry.setHours(0, 0, 0, 0);
@@ -674,7 +698,7 @@ export const getProfilesCount = (plan: string): number => {
 // Helper para calcular días restantes
 export const getDaysRemaining = (expiryDate: string): number => {
   if (!expiryDate || expiryDate.trim() === '') return -999; // Valor especial para fechas no definidas
-  const today = new Date();
+  const today = getChileDate();
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(expiryDate);
   if (isNaN(expiry.getTime())) return -999;

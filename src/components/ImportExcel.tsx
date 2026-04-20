@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { Upload, FileSpreadsheet, X, Check, AlertCircle, Download, Calendar, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useApp } from '../context/AppContext';
+import { getChileDateString } from '../types';
 
 interface ImportExcelProps {
   onClose: () => void;
@@ -197,7 +198,7 @@ export function ImportExcel({ onClose, onSuccess }: ImportExcelProps) {
     }
 
     const accountsToImport = nonDuplicateRows.map((row) => {
-      const saleDate = new Date().toISOString().split('T')[0];
+      const saleDate = getChileDateString();
       const duration = 1;
 
       // Usar el email tal como viene en Excel, solo limpiar espacios al inicio/final

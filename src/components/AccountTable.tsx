@@ -32,7 +32,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS } from '../types';
+import { Account, getAccountStatus, getDaysRemaining, formatDate, formatDateForInput, AccountStatus, SaleStatus, getProfilesCount, areAllProfilesSold, areAllProfilesMarkedSold, countSoldProfiles, Profile, TWO_SCREEN_PRODUCTS, getChileDate, getChileDateString } from '../types';
 
 interface AccountTableProps {
   accounts: Account[];
@@ -126,8 +126,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
     // Si se marca como vendida, calcular fechas si no existen
     if (newStatus === 'sold' && !account.saleDate) {
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const today = getChileDate();
+      const todayStr = getChileDateString();
       const duration = account.duration || 1;
       const totalDays = duration * 30; // 1 mes = 30 días
       const expiryDate = new Date(today);
@@ -179,7 +179,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
   // Función para marcar cuenta como CAÍDA
   const handleMarkAsFallen = (account: Account) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getChileDateString();
 
     // Confirmar con el usuario
     if (confirm(`¿Marcar la cuenta ${account.email} como CAÍDA?\n\nEsto establecerá la fecha de vencimiento a hoy y la marcará como vencida.`)) {
@@ -226,8 +226,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
     if (!account.profiles) return;
 
     // Calcular fechas de venta
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const today = getChileDate();
+    const todayStr = getChileDateString();
     // Usar duración existente o 1 mes por defecto (1 mes = 30 días)
     const duration = account.duration || 1;
     const totalDays = duration * 30;
@@ -283,8 +283,8 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
       const account = accounts.find(acc => acc.id === accountId);
       if (!account) return;
 
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const today = getChileDate();
+      const todayStr = getChileDateString();
       const duration = account.duration || 1;
       const totalDays = duration * 30;
       const expiryDate = new Date(today);
@@ -338,7 +338,7 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
 
     if (!confirm(`¿Marcar ${selectedAccounts.size} cuentas como Caídas?`)) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getChileDateString();
     const updatedIds = new Set<string>();
 
     selectedAccounts.forEach(accountId => {
@@ -1360,8 +1360,8 @@ Att. IA Rocky Cuentas`;
                           } else if (newStatus === 'sold') {
                             // Vendida - calcular fechas si no existen
                             if (!account.saleDate) {
-                              const today = new Date();
-                              const todayStr = today.toISOString().split('T')[0];
+                              const today = getChileDate();
+                              const todayStr = getChileDateString();
                               const duration = account.duration || 1;
                               const totalDays = duration * 30;
                               const expiryDate = new Date(today);
@@ -1399,7 +1399,7 @@ Att. IA Rocky Cuentas`;
                             }
                           } else if (newStatus === 'fallen') {
                             // Caída
-                            const today = new Date().toISOString().split('T')[0];
+                            const today = getChileDateString();
                             updateAccount({
                               ...account,
                               expiryDate: today,
@@ -1578,8 +1578,8 @@ Att. IA Rocky Cuentas`;
                               }
 
                               // Calcular fechas de venta
-                              const today = new Date();
-                              const todayStr = today.toISOString().split('T')[0];
+                              const today = getChileDate();
+                              const todayStr = getChileDateString();
                               // Usar duración existente o 1 mes por defecto
                               const duration = account.duration || 1;
                               // Calcular fecha de vencimiento

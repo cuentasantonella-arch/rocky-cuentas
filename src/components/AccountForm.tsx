@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, User, Users, Lock, Calendar, Check, X as XIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount, formatDateForInput } from '../types';
+import { Account, Profile, SaleStatus, calculateExpiryDate, getSlotLabel, areAllProfilesSold, TWO_SCREEN_PRODUCTS, SINGLE_PROFILE_PRODUCTS, getProfilesCount, formatDateForInput, getChileDateString } from '../types';
 
 interface AccountFormProps {
   account?: Account;
@@ -966,7 +966,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                           onClick={() => {
                             // Iniciar con la fecha actual (calculada o manual)
                             // Extraer solo la parte de fecha para el input
-                            const dateToUse = formatDateForInput(manualExpiryDate) || formatDateForInput(calculatedExpiryDate) || new Date().toISOString().split('T')[0];
+                            const dateToUse = formatDateForInput(manualExpiryDate) || formatDateForInput(calculatedExpiryDate) || getChileDateString();
                             setTempManualExpiryDate(dateToUse);
                           }}
                           className="px-3 py-2.5 border-2 border-indigo-500 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors flex items-center justify-center"
