@@ -455,8 +455,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       // Cargar productos de Supabase y siempre combinar con instructivos de DEFAULT_PRODUCTS
+      // Siempre asegurar que TODOS los productos de DEFAULT_PRODUCTS estén disponibles
       if (products && products.length > 0) {
         // Combinar: usar datos de Supabase pero SIEMPRE agregar instructivos de defaults
+        // Y AGREGAR productos que estén en DEFAULT_PRODUCTS pero no en Supabase
+        const supabaseProductNames = new Set(products.map(p => p.name?.toLowerCase()));
+
         payload.products = products.map(p => {
           // Buscar el producto default correspondiente para obtener instructivo
           const defaultProd = DEFAULT_PRODUCTS.find(
@@ -476,6 +480,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
             instructive: instructive,
           };
         });
+
+        // AGREGAR productos de DEFAULT_PRODUCTS que no estén en Supabase
+        for (const defaultProd of DEFAULT_PRODUCTS) {
+          if (!supabaseProductNames.has(defaultProd.name.toLowerCase())) {
+            payload.products.push(defaultProd);
+            // Guardar en Supabase para futuras cargas
+            await supabase.from('products').upsert({
+              id: defaultProd.id,
+              name: defaultProd.name,
+              icon: defaultProd.icon,
+              plans: defaultProd.plans,
+              color: defaultProd.color,
+              image_url: defaultProd.imageUrl,
+              instructive: defaultProd.instructive,
+            });
+          }
+        }
 
         console.log('✅ Productos cargados con instructivos:', payload.products.length);
       } else {
