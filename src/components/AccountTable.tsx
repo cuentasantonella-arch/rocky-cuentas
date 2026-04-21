@@ -95,7 +95,23 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   // Obtener productos únicos que tienen cuentas
   const productsWithAccounts = useMemo(() => {
     const productNames = new Set(accounts.map(acc => acc.productType));
-    return state.products.filter(p => productNames.has(p.name));
+    // Incluir productos de state.products Y productos que tienen cuentas aunque no estén en state.products
+    const matchedProducts = state.products.filter(p => productNames.has(p.name));
+
+    // Agregar productos que tienen cuentas pero no están en state.products (crear objeto básico)
+    for (const name of productNames) {
+      if (!matchedProducts.find(p => p.name === name)) {
+        matchedProducts.push({
+          id: name.toLowerCase().replace(/\s+/g, '-'),
+          name: name,
+          icon: 'tv',
+          plans: [],
+          color: '#6366f1',
+        });
+      }
+    }
+
+    return matchedProducts;
   }, [accounts, state.products]);
 
   // Función para marcar/desmarcar perfil como vendido
@@ -782,11 +798,17 @@ Enviado desde Rocky Cuentas`;
                       isSelected ? 'brightness-0 invert' : ''
                     }`}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
+                      // Fallback: mostrar inicial del nombre en lugar de ocultar
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = document.createElement('span');
+                      fallback.className = `text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-400'}`;
+                      fallback.textContent = product.name.charAt(0);
+                      target.parentNode?.insertBefore(fallback, target);
                     }}
                   />
                 ) : (
-                  <span className={`text-lg ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                  <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-400'}`}>
                     {product.name.charAt(0)}
                   </span>
                 )}
