@@ -1,47 +1,48 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Edit2, Trash2, ExternalLink, MessageCircle, Send } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, ExternalLink, MessageCircle, Send, Phone, Globe } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { generateId } from '../types';
 
+// Canal de contacto individual
+interface SupportChannel {
+  type: 'whatsapp' | 'telegram' | 'website';
+  url: string;
+}
+
+// Contacto de soporte con múltiples canales
 interface SupportContact {
   id: string;
   name: string;
-  type: 'whatsapp' | 'telegram' | 'website' | 'other';
-  url: string;
-  icon?: string;
-  description?: string;
+  channels: SupportChannel[];
   createdAt: string;
+  updatedAt: string;
 }
-
-const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 export function Support() {
   const [supportContacts, setSupportContacts] = useState<SupportContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<SupportContact | null>(null);
+
+  // Form data para el modal
   const [formData, setFormData] = useState({
     name: '',
-    type: 'website' as 'whatsapp' | 'telegram' | 'website' | 'other',
-    url: '',
-    description: '',
+    whatsapp: '',
+    telegram: '',
+    website: '',
   });
 
-  // Datos iniciales con RIPPER FLIX
+  // Contactos iniciales por defecto (RIPPER FLIX)
   const DEFAULT_SUPPORT_CONTACTS: SupportContact[] = [
     {
-      id: 'ripper-flix-wa',
+      id: 'ripper-flix-default',
       name: 'RIPPER FLIX',
-      type: 'whatsapp',
-      url: '+51910162324',
-      description: 'WhatsApp de soporte',
+      channels: [
+        { type: 'whatsapp', url: '+51910162324' },
+        { type: 'website', url: 'https://luchitovip.com/inicio.php' },
+      ],
       createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'ripper-flix-web',
-      name: 'RIPPER FLIX',
-      type: 'website',
-      url: 'https://luchitovip.com/inicio.php',
-      description: 'Página web oficial',
-      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ];
 
@@ -49,45 +50,124 @@ export function Support() {
     loadSupportContacts();
   }, []);
 
+  // Cargar contactos desde Supabase
   const loadSupportContacts = async () => {
     try {
-      // Load from localStorage for simplicity
-      const saved = localStorage.getItem('support_contacts');
-      if (saved) {
-        setSupportContacts(JSON.parse(saved));
+      const { data, error } = await supabase
+        .from('support_contacts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error cargando contactos de soporte:', error);
+        // Cargar datos por defecto si hay error
+        await initializeDefaultContacts();
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Convertir datos de Supabase al formato local
+        const contacts: SupportContact[] = data.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          channels: [
+            row.whatsapp ? { type: 'whatsapp' as const, url: row.whatsapp } : null,
+            row.telegram ? { type: 'telegram' as const, url: row.telegram } : null,
+            row.website ? { type: 'website' as const, url: row.website } : null,
+          ].filter((c): c is SupportChannel => c !== null),
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+        setSupportContacts(contacts);
       } else {
-        // Cargar contactos por defecto (RIPPER FLIX)
-        localStorage.setItem('support_contacts', JSON.stringify(DEFAULT_SUPPORT_CONTACTS));
-        setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
+        // Inicializar con contactos por defecto
+        await initializeDefaultContacts();
       }
     } catch (error) {
-      console.error('Error loading support contacts:', error);
-      // En caso de error, cargar los contactos por defecto
-      setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
+      console.error('Error cargando contactos:', error);
+      await initializeDefaultContacts();
     } finally {
       setLoading(false);
     }
   };
 
-  const saveSupportContacts = (contacts: SupportContact[]) => {
-    localStorage.setItem('support_contacts', JSON.stringify(contacts));
-    setSupportContacts(contacts);
-  };
+  // Inicializar contactos por defecto en Supabase
+  const initializeDefaultContacts = async () => {
+    try {
+      for (const contact of DEFAULT_SUPPORT_CONTACTS) {
+        const { error } = await supabase.from('support_contacts').insert({
+          id: contact.id,
+          name: contact.name,
+          whatsapp: contact.channels.find(c => c.type === 'whatsapp')?.url || null,
+          telegram: contact.channels.find(c => c.type === 'telegram')?.url || null,
+          website: contact.channels.find(c => c.type === 'website')?.url || null,
+          created_at: contact.createdAt,
+          updated_at: contact.updatedAt,
+        });
 
-  const getContactIcon = (type: string) => {
-    switch (type) {
-      case 'whatsapp':
-        return <MessageCircle className="w-6 h-6" />;
-      case 'telegram':
-        return <Send className="w-6 h-6" />;
-      case 'website':
-        return <ExternalLink className="w-6 h-6" />;
-      default:
-        return <ExternalLink className="w-6 h-6" />;
+        if (error && error.code !== '23505') { // Ignorar errores de duplicado
+          console.error('Error insertando contacto por defecto:', error);
+        }
+      }
+
+      // Recargar después de insertar
+      loadSupportContacts();
+    } catch (error) {
+      console.error('Error inicializando contactos:', error);
+      setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
     }
   };
 
-  const getContactColor = (type: string) => {
+  // Guardar contacto en Supabase
+  const saveContact = async (contact: SupportContact) => {
+    const dataToSave = {
+      id: contact.id,
+      name: contact.name,
+      whatsapp: contact.channels.find(c => c.type === 'whatsapp')?.url || null,
+      telegram: contact.channels.find(c => c.type === 'telegram')?.url || null,
+      website: contact.channels.find(c => c.type === 'website')?.url || null,
+      updated_at: contact.updatedAt,
+    };
+
+    const { error } = await supabase
+      .from('support_contacts')
+      .upsert(dataToSave);
+
+    if (error) {
+      console.error('Error guardando contacto:', error);
+      throw error;
+    }
+  };
+
+  // Eliminar contacto de Supabase
+  const deleteContactFromSupabase = async (id: string) => {
+    const { error } = await supabase
+      .from('support_contacts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error eliminando contacto:', error);
+      throw error;
+    }
+  };
+
+  // Obtener icono según tipo
+  const getChannelIcon = (type: string) => {
+    switch (type) {
+      case 'whatsapp':
+        return <MessageCircle className="w-5 h-5" />;
+      case 'telegram':
+        return <Send className="w-5 h-5" />;
+      case 'website':
+        return <Globe className="w-5 h-5" />;
+      default:
+        return <ExternalLink className="w-5 h-5" />;
+    }
+  };
+
+  // Obtener color según tipo
+  const getChannelColor = (type: string) => {
     switch (type) {
       case 'whatsapp':
         return '#25D366';
@@ -100,65 +180,44 @@ export function Support() {
     }
   };
 
-  const getContactLabel = (type: string) => {
-    switch (type) {
-      case 'whatsapp':
-        return 'WhatsApp';
-      case 'telegram':
-        return 'Telegram';
-      case 'website':
-        return 'Sitio Web';
-      default:
-        return 'Otro';
-    }
-  };
+  // Abrir enlace de contacto
+  const openChannel = (channel: SupportChannel) => {
+    let url = channel.url;
 
-  const openContact = (contact: SupportContact) => {
-    let url = contact.url;
-
-    // Format URL based on type
-    if (contact.type === 'whatsapp') {
-      // Convert to wa.me format if it's a phone number
-      const phone = contact.url.replace(/\D/g, '');
-      if (phone.startsWith('56')) {
-        url = `https://wa.me/${phone}`;
-      } else if (phone.startsWith('569')) {
-        url = `https://wa.me/${phone}`;
-      } else {
-        url = `https://wa.me/${phone}`;
-      }
-    } else if (contact.type === 'telegram') {
-      // Add @ if not present and format as t.me link
-      let username = contact.url.replace('@', '');
+    if (channel.type === 'whatsapp') {
+      const phone = channel.url.replace(/\D/g, '');
+      url = `https://wa.me/${phone}`;
+    } else if (channel.type === 'telegram') {
+      let username = channel.url.replace('@', '');
       if (!username.startsWith('https://t.me/') && !username.startsWith('t.me/')) {
         url = `https://t.me/${username}`;
       }
-    } else if (contact.type === 'website') {
-      // Add https if not present
-      if (!contact.url.startsWith('http://') && !contact.url.startsWith('https://')) {
-        url = `https://${contact.url}`;
+    } else if (channel.type === 'website') {
+      if (!channel.url.startsWith('http://') && !channel.url.startsWith('https://')) {
+        url = `https://${channel.url}`;
       }
     }
 
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  // Abrir modal para crear/editar
   const handleOpenModal = (contact?: SupportContact) => {
     if (contact) {
       setEditingContact(contact);
       setFormData({
         name: contact.name,
-        type: contact.type,
-        url: contact.url,
-        description: contact.description || '',
+        whatsapp: contact.channels.find(c => c.type === 'whatsapp')?.url || '',
+        telegram: contact.channels.find(c => c.type === 'telegram')?.url || '',
+        website: contact.channels.find(c => c.type === 'website')?.url || '',
       });
     } else {
       setEditingContact(null);
       setFormData({
         name: '',
-        type: 'website',
-        url: '',
-        description: '',
+        whatsapp: '',
+        telegram: '',
+        website: '',
       });
     }
     setIsModalOpen(true);
@@ -169,42 +228,79 @@ export function Support() {
     setEditingContact(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Guardar contacto
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.url.trim()) {
-      alert('Por favor completa el nombre y la URL/enlace');
+    if (!formData.name.trim()) {
+      alert('Por favor ingresa el nombre del contacto');
+      return;
+    }
+
+    const hasAtLeastOneChannel = formData.whatsapp.trim() || formData.telegram.trim() || formData.website.trim();
+    if (!hasAtLeastOneChannel) {
+      alert('Por favor ingresa al menos un canal de contacto (WhatsApp, Telegram o Web)');
       return;
     }
 
     const now = new Date().toISOString();
+    const channels: SupportChannel[] = [];
 
-    if (editingContact) {
-      const updated = supportContacts.map(c =>
-        c.id === editingContact.id
-          ? { ...c, name: formData.name.trim(), type: formData.type, url: formData.url.trim(), description: formData.description.trim() || undefined }
-          : c
-      );
-      saveSupportContacts(updated);
-    } else {
-      const newContact: SupportContact = {
-        id: generateId(),
-        name: formData.name.trim(),
-        type: formData.type,
-        url: formData.url.trim(),
-        description: formData.description.trim() || undefined,
-        createdAt: now,
-      };
-      saveSupportContacts([...supportContacts, newContact]);
+    if (formData.whatsapp.trim()) {
+      channels.push({ type: 'whatsapp', url: formData.whatsapp.trim() });
+    }
+    if (formData.telegram.trim()) {
+      channels.push({ type: 'telegram', url: formData.telegram.trim() });
+    }
+    if (formData.website.trim()) {
+      channels.push({ type: 'website', url: formData.website.trim() });
     }
 
-    handleCloseModal();
+    try {
+      if (editingContact) {
+        // Actualizar contacto existente
+        const updatedContact: SupportContact = {
+          ...editingContact,
+          name: formData.name.trim(),
+          channels,
+          updatedAt: now,
+        };
+
+        await saveContact(updatedContact);
+
+        setSupportContacts(prev =>
+          prev.map(c => c.id === editingContact.id ? updatedContact : c)
+        );
+      } else {
+        // Crear nuevo contacto
+        const newContact: SupportContact = {
+          id: generateId(),
+          name: formData.name.trim(),
+          channels,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        await saveContact(newContact);
+
+        setSupportContacts(prev => [...prev, newContact]);
+      }
+
+      handleCloseModal();
+    } catch (error) {
+      alert('Error al guardar el contacto. Intenta de nuevo.');
+    }
   };
 
-  const handleDelete = (contact: SupportContact) => {
+  // Eliminar contacto
+  const handleDelete = async (contact: SupportContact) => {
     if (confirm(`¿Eliminar "${contact.name}" de Soporte?`)) {
-      const filtered = supportContacts.filter(c => c.id !== contact.id);
-      saveSupportContacts(filtered);
+      try {
+        await deleteContactFromSupabase(contact.id);
+        setSupportContacts(prev => prev.filter(c => c.id !== contact.id));
+      } catch (error) {
+        alert('Error al eliminar el contacto. Intenta de nuevo.');
+      }
     }
   };
 
@@ -224,7 +320,7 @@ export function Support() {
           Soporte
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Acceso rápido a WhatsApp, Telegram y páginas de soporte de tus proveedores
+          Acceso rápido a WhatsApp, Telegram y páginas web de tus proveedores
         </p>
       </div>
 
@@ -238,7 +334,7 @@ export function Support() {
         Agregar Contacto de Soporte
       </button>
 
-      {/* Support Links Grid */}
+      {/* Support Contacts Grid */}
       {supportContacts.length === 0 ? (
         <div
           className="rounded-xl p-8 text-center"
@@ -253,78 +349,61 @@ export function Support() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {supportContacts.map((contact) => (
             <div
               key={contact.id}
-              className="rounded-xl overflow-hidden transition-all duration-200 hover:scale-105"
+              className="rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02]"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)'
               }}
             >
-              {/* Header with icon */}
+              {/* Header */}
               <div
-                className="p-6 flex items-center justify-center"
-                style={{ backgroundColor: getContactColor(contact.type) }}
+                className="p-4 flex items-center justify-between"
+                style={{ backgroundColor: '#E50914' }}
               >
-                <div className="text-white">
-                  {getContactIcon(contact.type)}
+                <h3 className="font-bold text-lg text-white">
+                  {contact.name}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleOpenModal(contact)}
+                    className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                    title="Editar"
+                  >
+                    <Edit2 className="w-4 h-4 text-white" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(contact)}
+                    className="p-1.5 hover:bg-red-500/50 rounded-lg transition-colors"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
                 </div>
               </div>
 
-              {/* Content */}
+              {/* Content - Botones de contacto */}
               <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className="text-xs px-2 py-1 rounded-full text-white font-medium"
-                    style={{ backgroundColor: getContactColor(contact.type) }}
-                  >
-                    {getContactLabel(contact.type)}
-                  </span>
-                  <div className="flex items-center gap-1">
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {contact.channels.map((channel, idx) => (
                     <button
-                      onClick={() => handleOpenModal(contact)}
-                      className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
-                      title="Editar"
+                      key={idx}
+                      onClick={() => openChannel(channel)}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
+                      style={{ backgroundColor: getChannelColor(channel.type) }}
                     >
-                      <Edit2 className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+                      {getChannelIcon(channel.type)}
+                      <span>
+                        {channel.type === 'whatsapp' && 'WhatsApp'}
+                        {channel.type === 'telegram' && 'Telegram'}
+                        {channel.type === 'website' && 'Web'}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => handleDelete(contact)}
-                      className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
+                  ))}
                 </div>
-
-                <h3
-                  className="font-semibold text-lg mb-1 text-center"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {contact.name}
-                </h3>
-
-                {contact.description && (
-                  <p
-                    className="text-xs text-center mb-3"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {contact.description}
-                  </p>
-                )}
-
-                {/* Open Button */}
-                <button
-                  onClick={() => openContact(contact)}
-                  className="w-full py-2.5 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-all hover:scale-105"
-                  style={{ backgroundColor: getContactColor(contact.type) }}
-                >
-                  {getContactIcon(contact.type)}
-                  <span>Abrir</span>
-                </button>
               </div>
             </div>
           ))}
@@ -354,9 +433,10 @@ export function Support() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Nombre */}
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Nombre *
+                  Nombre del Proveedor *
                 </label>
                 <input
                   type="text"
@@ -373,78 +453,71 @@ export function Support() {
                 />
               </div>
 
+              {/* WhatsApp */}
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Tipo de Contacto *
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['whatsapp', 'telegram', 'website'] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, type })}
-                      className="py-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1"
-                      style={{
-                        backgroundColor: formData.type === type ? getContactColor(type) : 'transparent',
-                        borderColor: formData.type === type ? getContactColor(type) : 'var(--border-color)',
-                        color: formData.type === type ? 'white' : 'var(--text-secondary)'
-                      }}
-                    >
-                      {getContactIcon(type)}
-                      <span className="text-xs font-medium">{getContactLabel(type)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  {formData.type === 'whatsapp' ? 'Número de WhatsApp *' :
-                   formData.type === 'telegram' ? 'Usuario de Telegram *' :
-                   'URL del Sitio Web *'}
+                <label className="flex items-center gap-2 text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <MessageCircle className="w-4 h-4" style={{ color: '#25D366' }} />
+                  WhatsApp
                 </label>
                 <input
                   type="text"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-lg border"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
                     borderColor: 'var(--border-color)',
                     color: 'var(--text-primary)'
                   }}
-                  placeholder={
-                    formData.type === 'whatsapp' ? '56912345678' :
-                    formData.type === 'telegram' ? 'nombre_usuario' :
-                    'https://ejemplo.com/soporte'
-                  }
-                  required
+                  placeholder="+51 910 162 324"
                 />
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {formData.type === 'whatsapp' && 'Solo números, incluye código de país (ej: 56912345678)'}
-                  {formData.type === 'telegram' && 'Sin @ (ej: proveedor123 o https://t.me/proveedor123)'}
-                  {formData.type === 'website' && 'URL completa (ej: https://luchitovip.com/inicio.php)'}
-                </p>
               </div>
 
+              {/* Telegram */}
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                  Descripción (opcional)
+                <label className="flex items-center gap-2 text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <Send className="w-4 h-4" style={{ color: '#0088cc' }} />
+                  Telegram
                 </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={2}
-                  className="w-full px-4 py-2.5 rounded-lg border resize-none"
+                <input
+                  type="text"
+                  value={formData.telegram}
+                  onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border"
                   style={{
                     backgroundColor: 'var(--bg-elevated)',
                     borderColor: 'var(--border-color)',
                     color: 'var(--text-primary)'
                   }}
-                  placeholder="Descripción adicional..."
+                  placeholder="nombre_usuario"
                 />
               </div>
 
+              {/* Website */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  <Globe className="w-4 h-4" style={{ color: '#E50914' }} />
+                  Página Web
+                </label>
+                <input
+                  type="text"
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-lg border"
+                  style={{
+                    backgroundColor: 'var(--bg-elevated)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)'
+                  }}
+                  placeholder="https://luchitovip.com/inicio.php"
+                />
+              </div>
+
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                💡 Ingresa al menos un canal de contacto. Puedes agregar WhatsApp, Telegram y/o Web.
+              </p>
+
+              {/* Botones */}
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
