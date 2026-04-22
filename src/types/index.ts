@@ -376,7 +376,7 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     id: '10',
     name: 'YouTube Premium',
     icon: 'youtube',
-    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
     color: '#FF0000',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/YouTube_Premium_logo.svg/1280px-YouTube_Premium_logo.svg.png',
   },
@@ -406,12 +406,12 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
   },
   {
     id: '14',
-    name: 'Cerrar Netflix con Pines',
+    name: 'Netflix Extra',
     icon: 'tv',
     plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
     color: '#E50914',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `🔹📺✨ CERRAR NETFLIX CON PINES - 1 PIN
+    instructive: `🔹📺✨ NETFLIX EXTRA - 1 PIN
 
 ✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
 
@@ -626,13 +626,51 @@ La cuenta proporcionada es europea, por lo que se deben respetar ciertas políti
 
 🙏 Gracias por tu compra 👍🏻😊`,
   },
+  {
+    id: 'netflix-extras',
+    name: 'Netflix Extras',
+    icon: 'tv',
+    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
+    color: '#E50914',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
+    instructive: `🔹📺✨ NETFLIX EXTRAS - PERFILES ADICIONALES
+
+✅ Video explicativo para agregar perfiles en Netflix:
+
+🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
+
+📌 CARACTERÍSTICAS:
+• Perfiles adicionales para tu cuenta Netflix
+• Ideal para hogares con múltiples usuarios
+• Plan flexible: Mensual, 3, 6 o 12 meses
+
+💡 ¡Agrega hasta 5 perfiles adicionales a tu cuenta principal!`,
+  },
+  {
+    id: 'universal-plus',
+    name: 'Universal Plus',
+    icon: 'tv-2',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#7B2CBF',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Universal_Logo.svg/512px-Universal_Logo.svg.png',
+    instructive: `🔹📺✨ UNIVERSAL PLUS
+
+Bienvenido a Universal Plus! 🙏
+
+📌 CARACTERÍSTICAS:
+• Acceso a contenido de Universal+
+• Incluye canales de televisión en vivo
+• Planes flexibles: Mensual, 3, 6 o 12 meses
+
+🎬 ¡Disfruta de películas, series y contenido exclusivo!`,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
 
-// Productos que usan 1 solo perfil con PIN (ej: Cerrar Netflix con Pines)
-export const SINGLE_PROFILE_PRODUCTS = ['Cerrar Netflix con Pines', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
+// Productos que usan 1 solo perfil con PIN (ej: Netflix Extra, Netflix Extras)
+export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra', 'Netflix Extras', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],
