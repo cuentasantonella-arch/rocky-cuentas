@@ -25,6 +25,26 @@ export function Support() {
     description: '',
   });
 
+  // Datos iniciales con RIPPER FLIX
+  const DEFAULT_SUPPORT_CONTACTS: SupportContact[] = [
+    {
+      id: 'ripper-flix-wa',
+      name: 'RIPPER FLIX',
+      type: 'whatsapp',
+      url: '+51910162324',
+      description: 'WhatsApp de soporte',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'ripper-flix-web',
+      name: 'RIPPER FLIX',
+      type: 'website',
+      url: 'https://luchitovip.com/inicio.php',
+      description: 'Página web oficial',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
   useEffect(() => {
     loadSupportContacts();
   }, []);
@@ -35,9 +55,15 @@ export function Support() {
       const saved = localStorage.getItem('support_contacts');
       if (saved) {
         setSupportContacts(JSON.parse(saved));
+      } else {
+        // Cargar contactos por defecto (RIPPER FLIX)
+        localStorage.setItem('support_contacts', JSON.stringify(DEFAULT_SUPPORT_CONTACTS));
+        setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
       }
     } catch (error) {
       console.error('Error loading support contacts:', error);
+      // En caso de error, cargar los contactos por defecto
+      setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
     } finally {
       setLoading(false);
     }

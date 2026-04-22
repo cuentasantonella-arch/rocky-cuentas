@@ -658,6 +658,23 @@ Bienvenido a Universal Plus! 🙏
 
 🎬 ¡Disfruta de películas, series y contenido exclusivo!`,
   },
+  {
+    id: 'ripper-flix',
+    name: 'Ripper Flix',
+    icon: 'film',
+    plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
+    color: '#FF4500',
+    imageUrl: '/images/ripper-flix-logo.png',
+    instructive: `🔴 RIPPER FLIX - STREAMING
+
+Bienvenido a Ripper Flix! 🎬
+
+📌 CARACTERÍSTICAS:
+• Acceso a contenido de streaming
+• Planes flexibles: Mensual, 3, 6 o 12 meses
+
+💬 ¿Necesitas ayuda? Contacta a tu proveedor.`,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
