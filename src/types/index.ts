@@ -257,8 +257,8 @@ Atentamente: Equipo Rocky Cuentas`,
     name: 'Cerrar Netflix con Pines',
     icon: 'tv',
     plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
-    color: '#0066CC',
-    imageUrl: '/images/netflix-extra-icon.png',
+    color: '#FFCC00',
+    imageUrl: '/images/lg-uplus-logo.png',
     instructive: `📺✨ INSTRUCTIVO CERRAR CUENTA CON PINES
 
 ✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
@@ -270,8 +270,8 @@ Atentamente: Equipo Rocky Cuentas`,
     name: 'Netflix Extras',
     icon: 'tv',
     plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
-    color: '#0066CC',
-    imageUrl: '/images/netflix-extra-icon.png',
+    color: '#FFCC00',
+    imageUrl: '/images/lg-uplus-logo.png',
     instructive: `📺✨ NETFLIX EXTRAS - PERFILES ADICIONALES
 
 ✅ Video explicativo para agregar perfiles en Netflix:
