@@ -1160,7 +1160,16 @@ Enviado desde Rocky Cuentas`;
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {(() => {
-                        const product = state.products.find(p => p.name === account.productType);
+                        // Buscar producto por nombre exacto primero
+                        let product = state.products.find(p => p.name === account.productType);
+
+                        // Si no encuentra, buscar por coincidencia parcial (para Netflix Extras, etc.)
+                        if (!product && account.productType.toLowerCase().includes('netflix')) {
+                          product = state.products.find(p =>
+                            p.name.toLowerCase().includes('netflix')
+                          );
+                        }
+
                         return product?.imageUrl ? (
                           <img
                             src={product.imageUrl}
