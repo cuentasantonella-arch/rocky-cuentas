@@ -646,7 +646,7 @@ La cuenta proporcionada es europea, por lo que se deben respetar ciertas políti
     icon: 'tv-2',
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#7B2CBF',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Universal_Logo.svg/512px-Universal_Logo.svg.png',
+    imageUrl: '/images/unext-logo.png',
     instructive: `🔹📺✨ UNIVERSAL PLUS
 
 Bienvenido a Universal Plus! 🙏
@@ -657,6 +657,42 @@ Bienvenido a Universal Plus! 🙏
 • Planes flexibles: Mensual, 3, 6 o 12 meses
 
 🎬 ¡Disfruta de películas, series y contenido exclusivo!`,
+  },
+  {
+    id: 'instructivo-universal',
+    name: 'Instructivo Universal',
+    icon: 'book-open',
+    plans: ['Ver Instructivo'],
+    color: '#FFCC00',
+    imageUrl: '/images/unext-logo.png',
+    instructive: `🔹📺✨ INSTRUCTIVO UNIVERSAL
+
+Bienvenido! 🙏
+
+📌 CARACTERÍSTICAS:
+• Acceso universal a todos los servicios
+• Incluye múltiples plataformas
+• Soporte 24/7
+
+🎬 ¡Disfruta de todo tu contenido favorito sin limitaciones!`,
+  },
+  {
+    id: 'producto-universal',
+    name: 'Producto Universal',
+    icon: 'gift',
+    plans: ['Ver Producto'],
+    color: '#FFCC00',
+    imageUrl: '/images/unext-logo.png',
+    instructive: `🎁✨ PRODUCTO UNIVERSAL
+
+¡Bienvenido a tu nuevo producto! 🙏
+
+📌 CARACTERÍSTICAS:
+• Acceso completo
+• Incluye todos los beneficios
+• Fácil de usar
+
+🎉 ¡Gracias por tu compra!`,
   },
 ];
 
