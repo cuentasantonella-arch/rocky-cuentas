@@ -60,8 +60,8 @@ export function Support() {
 
       if (error) {
         console.error('Error cargando contactos de soporte:', error);
-        // Cargar datos por defecto si hay error
-        await initializeDefaultContacts();
+        // Intentar cargar desde localStorage como respaldo
+        loadFromLocalStorage();
         return;
       }
 
@@ -79,16 +79,58 @@ export function Support() {
           updatedAt: row.updated_at,
         }));
         setSupportContacts(contacts);
+        // Guardar en localStorage como respaldo
+        saveToLocalStorage(contacts);
       } else {
-        // Inicializar con contactos por defecto
-        await initializeDefaultContacts();
+        // Verificar si hay datos en localStorage
+        const localData = getFromLocalStorage();
+        if (localData.length > 0) {
+          setSupportContacts(localData);
+        } else {
+          // Inicializar con contactos por defecto
+          await initializeDefaultContacts();
+        }
       }
     } catch (error) {
       console.error('Error cargando contactos:', error);
-      await initializeDefaultContacts();
+      // Intentar cargar desde localStorage como último recurso
+      const localData = getFromLocalStorage();
+      if (localData.length > 0) {
+        setSupportContacts(localData);
+      } else {
+        setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Funciones de localStorage como respaldo
+  const LOCAL_STORAGE_KEY = 'rocky_support_contacts';
+
+  const getFromLocalStorage = (): SupportContact[] => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveToLocalStorage = (contacts: SupportContact[]) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
+  };
+
+  const loadFromLocalStorage = () => {
+    const localData = getFromLocalStorage();
+    if (localData.length > 0) {
+      setSupportContacts(localData);
+    } else {
+      // Cargar datos por defecto
+      setSupportContacts(DEFAULT_SUPPORT_CONTACTS);
+      saveToLocalStorage(DEFAULT_SUPPORT_CONTACTS);
+    }
+    setLoading(false);
   };
 
   // Inicializar contactos por defecto en Supabase
@@ -266,11 +308,16 @@ export function Support() {
           updatedAt: now,
         };
 
-        await saveContact(updatedContact);
+        try {
+          await saveContact(updatedContact);
+        } catch {
+          // Si Supabase falla, guardar solo en localStorage
+          console.log('Guardando solo en localStorage (Supabase no disponible)');
+        }
 
-        setSupportContacts(prev =>
-          prev.map(c => c.id === editingContact.id ? updatedContact : c)
-        );
+        const updatedList = supportContacts.map(c => c.id === editingContact.id ? updatedContact : c);
+        setSupportContacts(updatedList);
+        saveToLocalStorage(updatedList);
       } else {
         // Crear nuevo contacto
         const newContact: SupportContact = {
@@ -281,9 +328,16 @@ export function Support() {
           updatedAt: now,
         };
 
-        await saveContact(newContact);
+        try {
+          await saveContact(newContact);
+        } catch {
+          // Si Supabase falla, guardar solo en localStorage
+          console.log('Guardando solo en localStorage (Supabase no disponible)');
+        }
 
-        setSupportContacts(prev => [...prev, newContact]);
+        const newList = [...supportContacts, newContact];
+        setSupportContacts(newList);
+        saveToLocalStorage(newList);
       }
 
       handleCloseModal();
@@ -296,8 +350,14 @@ export function Support() {
   const handleDelete = async (contact: SupportContact) => {
     if (confirm(`¿Eliminar "${contact.name}" de Soporte?`)) {
       try {
-        await deleteContactFromSupabase(contact.id);
-        setSupportContacts(prev => prev.filter(c => c.id !== contact.id));
+        try {
+          await deleteContactFromSupabase(contact.id);
+        } catch {
+          console.log('Eliminando solo de localStorage (Supabase no disponible)');
+        }
+        const filteredList = supportContacts.filter(c => c.id !== contact.id);
+        setSupportContacts(filteredList);
+        saveToLocalStorage(filteredList);
       } catch (error) {
         alert('Error al eliminar el contacto. Intenta de nuevo.');
       }
