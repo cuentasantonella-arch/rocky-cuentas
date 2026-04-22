@@ -400,6 +400,7 @@ export function ProviderManager() {
     contact: '',
     email: '',
     telegramUsername: '',
+    supportUrl: '',
     notes: '',
   });
 
@@ -412,11 +413,12 @@ export function ProviderManager() {
         contact: provider.contact || '',
         email: provider.email || '',
         telegramUsername: provider.telegramUsername || '',
+        supportUrl: provider.supportUrl || '',
         notes: provider.notes || '',
       });
     } else {
       setEditingProvider(null);
-      setFormData({ name: '', productType: '', contact: '', email: '', telegramUsername: '', notes: '' });
+      setFormData({ name: '', productType: '', contact: '', email: '', telegramUsername: '', supportUrl: '', notes: '' });
     }
     setIsModalOpen(true);
   };
@@ -424,7 +426,7 @@ export function ProviderManager() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProvider(null);
-    setFormData({ name: '', productType: '', contact: '', email: '', telegramUsername: '', notes: '' });
+    setFormData({ name: '', productType: '', contact: '', email: '', telegramUsername: '', supportUrl: '', notes: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -443,6 +445,7 @@ export function ProviderManager() {
         contact: formData.contact.trim() || undefined,
         email: formData.email.trim() || undefined,
         telegramUsername: formData.telegramUsername.trim() || undefined,
+        supportUrl: formData.supportUrl.trim() || undefined,
         notes: formData.notes.trim() || undefined,
       });
     } else {
@@ -452,6 +455,7 @@ export function ProviderManager() {
         contact: formData.contact.trim() || undefined,
         email: formData.email.trim() || undefined,
         telegramUsername: formData.telegramUsername.trim() || undefined,
+        supportUrl: formData.supportUrl.trim() || undefined,
         notes: formData.notes.trim() || undefined,
       });
     }
@@ -664,6 +668,22 @@ export function ProviderManager() {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Sin @ (ejemplo: proveedor123)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  URL de Soporte
+                </label>
+                <input
+                  type="url"
+                  value={formData.supportUrl}
+                  onChange={(e) => setFormData({ ...formData, supportUrl: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[#0f0f1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="https://ejemplo.com/soporte"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Aparece en la sección "Soporte" para acceso rápido
                 </p>
               </div>
 

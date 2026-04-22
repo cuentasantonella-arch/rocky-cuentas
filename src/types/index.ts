@@ -69,6 +69,7 @@ export interface Provider {
   contact?: string;
   email?: string;
   telegramUsername?: string; // Usuario de Telegram del proveedor
+  supportUrl?: string; // URL de la página de soporte del proveedor
   notes?: string;
 }
 
@@ -252,6 +253,39 @@ Aviso de cambio: 📩 Al finalizar tu mes, escríbenos para entregarte tus nueva
 Atentamente: Equipo Rocky Cuentas`,
   },
   {
+    id: '14',
+    name: 'Cerrar Netflix con Pines',
+    icon: 'tv',
+    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
+    color: '#0066CC',
+    imageUrl: '/images/netflix-extra-icon.png',
+    instructive: `📺✨ INSTRUCTIVO CERRAR CUENTA CON PINES
+
+✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
+
+🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw`,
+  },
+  {
+    id: 'netflix-extras',
+    name: 'Netflix Extras',
+    icon: 'tv',
+    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
+    color: '#0066CC',
+    imageUrl: '/images/netflix-extra-icon.png',
+    instructive: `📺✨ NETFLIX EXTRAS - PERFILES ADICIONALES
+
+✅ Video explicativo para agregar perfiles en Netflix:
+
+🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
+
+📌 CARACTERÍSTICAS:
+• Perfiles adicionales para tu cuenta Netflix
+• Ideal para hogares con múltiples usuarios
+• Plan flexible: Mensual, 3, 6 o 12 meses
+
+💡 ¡Agrega hasta 5 perfiles adicionales a tu cuenta principal!`,
+  },
+  {
     id: '2',
     name: 'PrimeVideo',
     icon: 'play',
@@ -403,26 +437,6 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#0064FF',
     imageUrl: '/images/paramount-logo.png',
-  },
-  {
-    id: '14',
-    name: 'Netflix Extra',
-    icon: 'tv',
-    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
-    color: '#E50914',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `🔹📺✨ NETFLIX EXTRA - 1 PIN
-
-✅ A continuación, te compartimos un video explicativo para aprender a cerrar sesión en Netflix con PIN de seguridad 🔐🙌:
-
-🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
-
-📌 CARACTERÍSTICAS:
-• 1 solo perfil con PIN de seguridad
-• Ideal para uso individual
-• Plan flexible: Mensual, 3, 6 o 12 meses
-
-💡 ¡Una guía práctica para gestionar tu cuenta de forma rápida y segura!`,
   },
   {
     id: '15',
@@ -627,26 +641,6 @@ La cuenta proporcionada es europea, por lo que se deben respetar ciertas políti
 🙏 Gracias por tu compra 👍🏻😊`,
   },
   {
-    id: 'netflix-extras',
-    name: 'Netflix Extras',
-    icon: 'tv',
-    plans: ['Mensual', '3 meses', '4 meses', '6 meses', '12 meses'],
-    color: '#E50914',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png',
-    instructive: `🔹📺✨ NETFLIX EXTRAS - PERFILES ADICIONALES
-
-✅ Video explicativo para agregar perfiles en Netflix:
-
-🔗 https://www.youtube.com/watch?v=l5FGGCbZLbw
-
-📌 CARACTERÍSTICAS:
-• Perfiles adicionales para tu cuenta Netflix
-• Ideal para hogares con múltiples usuarios
-• Plan flexible: Mensual, 3, 6 o 12 meses
-
-💡 ¡Agrega hasta 5 perfiles adicionales a tu cuenta principal!`,
-  },
-  {
     id: 'universal-plus',
     name: 'Universal Plus',
     icon: 'tv-2',
@@ -669,8 +663,8 @@ Bienvenido a Universal Plus! 🙏
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
 
-// Productos que usan 1 solo perfil con PIN (ej: Netflix Extra, Netflix Extras)
-export const SINGLE_PROFILE_PRODUCTS = ['Netflix Extra', 'Netflix Extras', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
+// Productos que usan 1 solo perfil con PIN (ej: Cerrar Netflix con Pines, Disney Standar, Disney Premium)
+export const SINGLE_PROFILE_PRODUCTS = ['Cerrar Netflix con Pines', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],

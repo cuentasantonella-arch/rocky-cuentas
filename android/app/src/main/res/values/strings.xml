@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rocky Cuentas</string>
+    <string name="title_activity_main">Rocky Cuentas</string>
+    <string name="package_name">com.rockycuentas.app</string>
+    <string name="custom_url_scheme">com.rockycuentas.app</string>
+</resources>

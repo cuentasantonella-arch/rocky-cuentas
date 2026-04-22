@@ -7,10 +7,14 @@ import { Login } from './components/Login';
 import { ActivityLog } from './components/ActivityLog';
 import { Instructivos } from './components/Instructivos';
 import { Notes } from './components/Notes';
+import { Support } from './components/Support';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes' | 'support';
+
+// Versión actual del sistema
+const SYSTEM_VERSION = '1.1.0';
 
 function App() {
   const { isAuthenticated, loading } = useAuth();
@@ -68,6 +72,8 @@ function App() {
         return <Instructivos />;
       case 'notes':
         return <Notes />;
+      case 'support':
+        return <Support />;
       default:
         return <Dashboard />;
     }

@@ -76,12 +76,12 @@ export function AccountTable({ accounts, onEdit, onDelete, onDuplicate, showFilt
   const [notesModal, setNotesModal] = useState<{ accountId: string; notes: string } | null>(null);
   const [tempNotes, setTempNotes] = useState('');
 
-  // Efecto para limpiar IDs de cuentas recientemente actualizadas
+  // Efecto para limpiar IDs de cuentas recientemente actualizadas (mantener posición por 1 minuto)
   useEffect(() => {
     if (recentlyUpdatedIds.size > 0) {
       const timer = setTimeout(() => {
         setRecentlyUpdatedIds(new Set());
-      }, 500);
+      }, 60000); // 1 minuto para mantener la posición
       return () => clearTimeout(timer);
     }
   }, [recentlyUpdatedIds]);
@@ -558,8 +558,13 @@ Enviado desde Rocky Cuentas`;
         }
       });
 
-      // Ordenar las otras cuentas
+      // Ordenar las otras cuentas - PRIMERO disponibles, LUEGO vendidos
       others.sort((a, b) => {
+        // Primero: disponibles primero, vendidos después
+        if (a.saleStatus === 'available' && b.saleStatus !== 'available') return -1;
+        if (a.saleStatus !== 'available' && b.saleStatus === 'available') return 1;
+
+        // Dentro de cada grupo, ordenar por campo seleccionado
         let comparison = 0;
         switch (sortField) {
           case 'clientName':
@@ -639,8 +644,13 @@ Enviado desde Rocky Cuentas`;
       return finalResult;
     }
 
-    // Ordenar normal si no hay cuentas recientemente actualizadas
+    // Ordenar normal si no hay cuentas recientemente actualizadas - DISPONIBLES PRIMERO
     result.sort((a, b) => {
+      // Primero: disponibles primero, vendidos después
+      if (a.saleStatus === 'available' && b.saleStatus !== 'available') return -1;
+      if (a.saleStatus !== 'available' && b.saleStatus === 'available') return 1;
+
+      // Dentro de cada grupo, ordenar por campo seleccionado
       let comparison = 0;
       switch (sortField) {
         case 'clientName':

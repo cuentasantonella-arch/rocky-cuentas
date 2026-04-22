@@ -26,13 +26,14 @@ import {
   AlertCircle,
   PackageCheck,
   StickyNote,
+  Headphones,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getAccountStatus } from '../types';
 
-type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes';
+type Page = 'dashboard' | 'accounts' | 'add' | 'import' | 'products' | 'providers' | 'clients' | 'settings' | 'activity' | 'instructivos' | 'notes' | 'support';
 
 interface SidebarProps {
   currentPage: Page;
@@ -97,6 +98,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     { id: 'providers' as Page, label: 'Proveedores', icon: Users },
     { id: 'notes' as Page, label: 'Notas', icon: StickyNote },
     { id: 'instructivos' as Page, label: 'Instructivos', icon: BookOpen },
+    { id: 'support' as Page, label: 'Soporte', icon: Headphones },
     { id: 'activity' as Page, label: 'Historial', icon: History, adminOnly: true },
     { id: 'settings' as Page, label: 'Configuración', icon: Settings },
   ];
@@ -159,9 +161,14 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           )}
           {!collapsed && (
             <div>
-              <h1 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-                {state.settings.businessName}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                  {state.settings.businessName}
+                </h1>
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}>
+                  v1.1.0
+                </span>
+              </div>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Sistema de Gestión</p>
             </div>
           )}
