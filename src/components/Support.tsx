@@ -44,6 +44,15 @@ export function Support() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'oscar-default',
+      name: 'Oscar',
+      channels: [
+        { type: 'website', url: 'https://mail.tm/' },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ];
 
   useEffect(() => {
