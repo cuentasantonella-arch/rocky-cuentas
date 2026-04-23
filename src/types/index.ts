@@ -699,8 +699,9 @@ Bienvenido! 🙏
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos
 export const TWO_SCREEN_PRODUCTS = ['PrimeVideo', 'Crunchyroll', 'Paramount+'];
 
-// Productos que usan 1 solo perfil con PIN (ej: Cerrar Netflix con Pines, Disney Standar, Disney Premium)
-export const SINGLE_PROFILE_PRODUCTS = ['Cerrar Netflix con Pines', 'Disney Standar', 'Disney Premium', 'HBO Max Standar', 'HBO Max Con TNT'];
+// Productos que usan 1 solo perfil con PIN (ej: Cerrar Netflix con Pines, HBO Max Standar, HBO Max Con TNT)
+// NOTA: Disney Standar y Disney Premium permiten hasta 5 perfiles
+export const SINGLE_PROFILE_PRODUCTS = ['Cerrar Netflix con Pines', 'HBO Max Standar', 'HBO Max Con TNT'];
 
 export const DEFAULT_SETTINGS: Settings = {
   alarmDays: [7, 3, 1],

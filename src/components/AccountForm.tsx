@@ -672,7 +672,7 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                     </p>
                   ) : (
                     <p className="text-base font-medium" style={{ color: '#64748b' }}>
-                      Netflix Extra permite solo 1 perfil para 1 persona
+                      Este producto permite solo 1 perfil con PIN
                     </p>
                   )}
                 </div>
