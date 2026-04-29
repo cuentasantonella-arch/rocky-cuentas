@@ -711,6 +711,14 @@ Bienvenido! 🙏
 
 🎉 ¡Gracias por tu compra!`,
   },
+  {
+    id: '24',
+    name: 'Oleada Tv',
+    icon: 'tv',
+    plans: ['1 mes', '3 meses', '6 meses', '12 meses'],
+    color: '#E63946',
+    instructive: ``,
+  },
 ];
 
 // Productos que solo usan 2 pantallas (Cliente 1, Cliente 2) sin perfiles específicos

@@ -202,8 +202,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    // Para MaxPlayer y Blessed Player, usar "Usuario" en vez de "Correo"
-    const usesUsername = ['MaxPlayer', 'Blessed Player'].includes(formData.productType);
+    // Para MaxPlayer, Blessed Player y Oleada Tv, usar "Usuario" en vez de "Correo"
+    const usesUsername = ['MaxPlayer', 'Blessed Player', 'Oleada Tv'].includes(formData.productType);
 
     // Para Bleezed Player, requerir al menos Código o Usuario
     const isBleezed = formData.productType === 'Blessed Player';
@@ -216,8 +216,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
     }
 
     // Validar que no exista otra cuenta con el mismo email y producto
-    // Solo verificar duplicados para productos que usan email (no MaxPlayer ni Bleezed)
-    if (formData.productType !== 'Blessed Player' && formData.productType !== 'MaxPlayer') {
+    // Solo verificar duplicados para productos que usan email (no MaxPlayer, Blessed Player ni Oleada Tv)
+    if (!['Blessed Player', 'MaxPlayer', 'Oleada Tv'].includes(formData.productType)) {
       const emailNormalized = formData.email.trim().toLowerCase();
       const existingAccount = state.accounts.find(
         acc =>
@@ -377,8 +377,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
       saleStatus,
       notes: formData.notes.trim() || undefined,
       profiles: profilesToSave,
-      // Campo usuario para Bleezed Player
-      user: formData.productType === 'Blessed Player' ? formData.user.trim() : undefined,
+      // Campo usuario para Bleezed Player y Oleada Tv
+      user: ['Blessed Player', 'Oleada Tv'].includes(formData.productType) ? formData.user.trim() : undefined,
     };
 
     if (isEditing && account) {
@@ -433,8 +433,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
                 Credenciales
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* MaxPlayer y Blessed Player usan Usuario en vez de Correo */}
-                {['MaxPlayer', 'Blessed Player'].includes(formData.productType) ? (
+                {/* MaxPlayer, Blessed Player y Oleada Tv usan Usuario en vez de Correo */}
+                {['MaxPlayer', 'Blessed Player', 'Oleada Tv'].includes(formData.productType) ? (
                   <>
                     <div>
                       <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
