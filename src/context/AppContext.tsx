@@ -641,6 +641,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: 'SET_STATE', payload });
 
+      // CORRECCIÓN AUTOMÁTICA: Corregir cuentas sin fecha de vencimiento
+      // Busca cuentas que tienen saleDate pero NO tienen expiryDate y las corrige
+      if (payload.accounts && payload.accounts.length > 0) {
+        setTimeout(() => {
+          fixMissingExpiryDates(payload.accounts || []);
+        }, 500);
+      }
+
       // MIGRACIÓN AUTOMÁTICA: Extraer clientes de cuentas existentes
       // Esto asegura que los clientes de cuentas anteriores se guarden en la sección de clientes
       // IMPORTANTE: Pasar payload.accounts y payload.clients directamente para evitar problemas de sincronización
@@ -804,6 +812,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [state, isLoading]);
+
+  // CORRECCIÓN AUTOMÁTICA: Corregir cuentas sin fecha de vencimiento
+  // Busca cuentas que tienen saleDate pero NO tienen expiryDate y las corrige
+  const fixMissingExpiryDates = async (accounts: Account[]) => {
+    try {
+      console.log('🔧 Verificando cuentas sin fecha de vencimiento...');
+      let fixedCount = 0;
+
+      for (const account of accounts) {
+        // Solo corregir si:
+        // 1. NO es "Disponible"
+        // 2. TIENE fecha de venta (saleDate)
+        // 3. TIENE duración mayor a 0
+        // 4. NO tiene fecha de vencimiento (expiryDate)
+        if (
+          account.plan !== 'Disponible' &&
+          account.saleDate &&
+          account.saleDate.trim() !== '' &&
+          account.duration > 0 &&
+          (!account.expiryDate || account.expiryDate.trim() === '')
+        ) {
+          console.log(`🔧 Corrigiendo cuenta sin fecha de vencimiento: ${account.email}`);
+
+          // Calcular la fecha de vencimiento
+          const newExpiryDate = calculateExpiryDate(account.saleDate, account.duration);
+          const now = new Date().toISOString();
+
+          // Actualizar en Supabase
+          try {
+            const { error } = await supabase
+              .from('accounts')
+              .update({
+                expiry_date: normalizeDate(newExpiryDate),
+                updated_at: now,
+              })
+              .eq('id', account.id);
+
+            if (error) {
+              console.error(`❌ Error corrigiendo cuenta ${account.email}:`, error);
+            } else {
+              // Actualizar en el estado local
+              const updatedAccount = {
+                ...account,
+                expiryDate: newExpiryDate,
+                updatedAt: now,
+              };
+              dispatch({ type: 'UPDATE_ACCOUNT', payload: updatedAccount });
+              fixedCount++;
+              console.log(`✅ Fecha corregida: ${account.email} → ${newExpiryDate}`);
+            }
+          } catch (err) {
+            console.error(`❌ Error actualizando cuenta ${account.email}:`, err);
+          }
+        }
+      }
+
+      if (fixedCount > 0) {
+        console.log(`🎉 Corrección completada: ${fixedCount} cuentas actualizadas`);
+      } else {
+        console.log('ℹ️ No había cuentas sin fecha de vencimiento para corregir');
+      }
+    } catch (error) {
+      console.error('❌ Error en corrección de fechas:', error);
+    }
+  };
 
   // Cargar datos al iniciar
   useEffect(() => {

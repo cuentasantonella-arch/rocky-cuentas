@@ -429,6 +429,23 @@ Elige la categoría que quieras ver (por ejemplo 🇨🇱 Chile) y selecciona el
     plans: ['Mensual', '3 meses', '6 meses', '12 meses'],
     color: '#4285F4',
     imageUrl: 'https://logos-world.net/wp-content/uploads/2025/02/Google-Gemini-Logo.png',
+    instructive: `🚀✨ Instructivo de Activación – Gemini Pro ✨🚀
+
+📩 Revisa tu correo
+Dirígete a tu bandeja de entrada de Gmail con el correo que proporcionaste (o el del cliente).
+👨‍👩‍👧‍👦 Acepta la invitación
+Busca el correo de invitación al grupo familiar y haz clic en "Aceptar invitación" ✅
+🌐 Ingresa a Gemini Pro
+Accede al siguiente enlace:
+👉 https://gemini.google.com
+🔐 Verifica tu cuenta
+Asegúrate de iniciar sesión con la MISMA cuenta de Gmail 📧 que usaste para aceptar la invitación.
+⚠️ ¡Muy importante! Debe ser exactamente la misma cuenta para que funcione correctamente.
+🎉 Confirma que está activado
+Una vez dentro, revisa la parte superior (donde aparece tu foto o inicial de perfil 👤).
+✔️ Si está bien activado, verás un indicador/círculo o distintivo de Gemini Pro ✨
+🚀 ¡Listo!
+Si ves ese indicador, significa que Gemini Pro ya está activo y funcionando correctamente 🎉🔥`,
   },
   {
     id: '13',

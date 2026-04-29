@@ -262,7 +262,8 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
 
     // Validar que si hay perfiles y NO es "Disponible", al menos uno esté asignado
     // PERO para productos de 2 pantallas, permitir perfiles vacíos (para poder vender uno a la vez)
-    if (formData.plan !== 'Disponible' && profilesCount > 0 && !usesClients) {
+    // PERO si ya es una cuenta en edición (isEditing), permitir perfiles vacíos para poder editar la fecha
+    if (formData.plan !== 'Disponible' && profilesCount > 0 && !usesClients && !isEditing) {
       const assignedCount = profiles.filter(p => p.clientName.trim()).length;
       if (assignedCount === 0) {
         newErrors.profiles = 'Debes asignar al menos un perfil antes de vender.';
@@ -859,11 +860,11 @@ export function AccountForm({ account, onClose }: AccountFormProps) {
               </div>
             )}
 
-            {/* Venta y Duración - Solo si no es "Disponible" */}
+            {/* Venta y Duración - SIEMPRE visible si no es "Disponible", incluso con perfiles */}
             {formData.plan !== 'Disponible' && (
               <div>
                 <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
-                  Venta
+                  Datos de Venta {profilesCount > 0 && <span className="text-xs text-indigo-500 ml-2">(Editable para todos los perfiles)</span>}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
